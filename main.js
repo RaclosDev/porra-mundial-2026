@@ -69,6 +69,22 @@ onValue(onlineUsersRef, (snap) => {
     if (listEl) {
         listEl.innerHTML = names.map(n => `<li>${n}</li>`).join("");
     }
+    // Update shooter queue
+    if (!window._knownOnlineNames) {
+      window._knownOnlineNames = new Set();
+      window._shooterQueue = [];
+    }
+    
+    names.forEach(n => {
+      if (!window._knownOnlineNames.has(n)) {
+        window._knownOnlineNames.add(n);
+        window._shooterQueue.push(n);
+      }
+    });
+    
+    if (typeof checkShooterQueue === 'function') {
+      checkShooterQueue();
+    }
     
     // Para móvil: toggle de la visibilidad al tocar (el :hover de CSS ya suele bastar, 
     // pero por si acaso, forzamos un pequeño "toque" visual en JS)
@@ -850,10 +866,30 @@ function renderHomeStandings() {
   }
 }
 
-window.openRtvePlayer = function() {
+window.openRtvePlayer = function(home, away) {
     const modal = document.getElementById('rtve-modal');
     if (modal) {
-        window.setPlayerSource('rtve');
+        window.currentSelectedMatchForPlayer = { home, away };
+        const normHome = window._normalizeFctv ? window._normalizeFctv(home) : '';
+        const normAway = window._normalizeFctv ? window._normalizeFctv(away) : '';
+        const key = normHome + ' vs ' + normAway;
+        const keyRev = normAway + ' vs ' + normHome;
+        
+        const isLa1 = window.la1Matches && (window.la1Matches.includes(key) || window.la1Matches.includes(keyRev));
+        const btnRtve = document.getElementById('btn-player-rtve');
+        
+        if (btnRtve) {
+            if (isLa1) {
+                btnRtve.style.display = 'inline-block';
+                window.setPlayerSource('rtve');
+            } else {
+                btnRtve.style.display = 'none';
+                window.setPlayerSource('fctv');
+            }
+        } else {
+            window.setPlayerSource('rtve');
+        }
+        
         modal.style.display = 'flex';
     }
 };
@@ -903,21 +939,27 @@ window.setPlayerSource = function(source) {
         
         iframeRtve.src = ""; // Stop audio
         
-        // Buscar el partido en directo
-        const liveMatches = (window.matchRadar && window.matchRadar.live) ? window.matchRadar.live : [];
-        let fctvUrl = null;
+        iframeRtve.src = ""; // Stop audio
         
-        for (const m of liveMatches) {
-            const key = _normalizeFctv(m.home) + ' vs ' + _normalizeFctv(m.away);
-            if (window.fctvMatchUrls[key]) {
-                fctvUrl = window.fctvMatchUrls[key];
-                break;
-            }
-            // Probar invertido
-            const keyRev = _normalizeFctv(m.away) + ' vs ' + _normalizeFctv(m.home);
-            if (window.fctvMatchUrls[keyRev]) {
-                fctvUrl = window.fctvMatchUrls[keyRev];
-                break;
+        // Buscar el partido clickado
+        let fctvUrl = null;
+        if (window.currentSelectedMatchForPlayer && window.currentSelectedMatchForPlayer.home && window._normalizeFctv) {
+            const m = window.currentSelectedMatchForPlayer;
+            const key = window._normalizeFctv(m.home) + ' vs ' + window._normalizeFctv(m.away);
+            const keyRev = window._normalizeFctv(m.away) + ' vs ' + window._normalizeFctv(m.home);
+            fctvUrl = window.fctvMatchUrls ? (window.fctvMatchUrls[key] || window.fctvMatchUrls[keyRev]) : null;
+        }
+        
+        // Fallback a buscar un live match (por si acaso)
+        if (!fctvUrl) {
+            const liveMatches = (window.matchRadar && window.matchRadar.live) ? window.matchRadar.live : [];
+            for (const m of liveMatches) {
+                const key = window._normalizeFctv(m.home) + ' vs ' + window._normalizeFctv(m.away);
+                const keyRev = window._normalizeFctv(m.away) + ' vs ' + window._normalizeFctv(m.home);
+                if (window.fctvMatchUrls && (window.fctvMatchUrls[key] || window.fctvMatchUrls[keyRev])) {
+                    fctvUrl = window.fctvMatchUrls[key] || window.fctvMatchUrls[keyRev];
+                    break;
+                }
             }
         }
         
@@ -929,13 +971,43 @@ window.setPlayerSource = function(source) {
             liveUrl = liveUrl.replace('-06-2026.html', '.html?icg=RVM&ilang=es');
             
             iframeFctv.src = liveUrl;
-        } else if (liveMatches.length === 0) {
-            alert('No hay ningún partido en directo ahora mismo.');
-            iframeFctv.src = "";
         } else {
-            // Fallback (poco probable que pase)
-            iframeFctv.src = 'https://jack07eo.mpstickv5m73jgravity.my/es/football';
+            alert('No hay enlace RBTV/FCTV para este partido o no ha empezado.');
+            iframeFctv.src = "";
         }
+    }
+};
+
+window.openStats = function(home, away) {
+    const normHome = window._normalizeFctv ? window._normalizeFctv(home) : '';
+    const normAway = window._normalizeFctv ? window._normalizeFctv(away) : '';
+    const key = normHome + ' vs ' + normAway;
+    const keyRev = normAway + ' vs ' + normHome;
+    
+    let url = null;
+    if (window.sofascoreUrls) {
+        url = window.sofascoreUrls[key] || window.sofascoreUrls[keyRev];
+    }
+    
+    let finalUrl = url || ('https://www.sofascore.com/search?q=' + encodeURIComponent(home + ' ' + away));
+    
+    // Si tenemos un proxy de Cloudflare configurado, sustituimos el dominio
+    let iframeUrl = finalUrl;
+    if (window.sofascoreProxy && finalUrl.includes('sofascore.com')) {
+        iframeUrl = finalUrl.replace('https://www.sofascore.com', window.sofascoreProxy);
+    }
+    
+    const modal = document.getElementById('stats-modal');
+    if (modal) {
+        const iframe = document.getElementById('stats-iframe');
+        iframe.src = iframeUrl;
+        
+        iframe.style.top = '0';
+        iframe.style.height = '100%';
+        
+        modal.style.display = 'flex';
+    } else {
+        window.open(finalUrl, '_blank');
     }
 };
 
@@ -986,9 +1058,17 @@ function renderLastMatches() {
       card.className = "last-match-card";
       
       let rtveBtn = '';
-      if (matchType === 'live') {
-          // Both actual LIVE and Starting Soon matches get the watch button
-          rtveBtn = `<button onclick="window.openRtvePlayer()" style="width: 100%; margin-top: 10px; background: #ff0000; color: white; border: none; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;"><span>🔴</span> Ver Partido${m.isStartingSoon ? '' : ' en Directo'}</button>`;
+      if (matchType === 'live' || matchType === 'next') {
+          const btnText = matchType === 'live' ? 'Ver Directo' : 'Ver Partido';
+          const iconPlay = matchType === 'live' ? '🔴' : '📺';
+          // Sanitize team names for JS string argument
+          const safeHome = m.home.replace(/'/g, "\\'");
+          const safeAway = m.away.replace(/'/g, "\\'");
+          rtveBtn = `<div style="text-align: center; margin-top: 10px;"><button onclick="window.openRtvePlayer('${safeHome}', '${safeAway}')" style="background: #ff0000; color: white; border: none; padding: 6px 20px; border-radius: 20px; font-size: 0.9rem; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 5px; box-shadow: 0 2px 4px rgba(255,0,0,0.3);"><span>${iconPlay}</span> ${btnText}</button></div>`;
+      } else if (matchType === 'last') {
+          const safeHome = m.home.replace(/'/g, "\\'");
+          const safeAway = m.away.replace(/'/g, "\\'");
+          rtveBtn = `<div style="text-align: center; margin-top: 10px;"><button onclick="window.openStats('${safeHome}', '${safeAway}')" style="background: #1e272e; color: #00d2d3; border: 1px solid rgba(0,210,211,0.3); padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"><span>📊</span> Estadísticas</button></div>`;
       }
 
       card.innerHTML = `
@@ -2842,3 +2922,211 @@ document.getElementById('btn-share-wa')?.addEventListener('click', async () => {
     btn.disabled = false;
   }
 });
+
+window._shooterQueue = window._shooterQueue || [];
+window._knownOnlineNames = window._knownOnlineNames || new Set();
+window._shooterActive = false;
+window._currentName = null;
+window._lottieAnim = null;
+window._kickFired = false;
+
+function checkShooterQueue() {
+  const playerWrapper = document.querySelector('.shooter-player-wrapper');
+  const goal = document.querySelector('.shooter-goal');
+  
+  if (window._shooterQueue.length === 0) {
+    if (playerWrapper) playerWrapper.style.opacity = '0';
+    if (goal) goal.style.opacity = '0';
+    window._shooterActive = false;
+    return;
+  }
+  
+  if (window._shooterActive) return; // loop already running
+  
+  window._shooterActive = true;
+  if (playerWrapper) playerWrapper.style.opacity = '1';
+  if (goal) goal.style.opacity = '1';
+  
+  doNextKick();
+}
+
+function doNextKick() {
+  if (window._shooterQueue.length === 0) {
+    checkShooterQueue(); // triggers hide
+    return;
+  }
+  
+  window._currentName = window._shooterQueue.shift();
+  window._kickFired = false;
+  
+  const bubble = document.getElementById('shooter-bubble');
+  if (bubble) {
+    // Add arrow back inside the text
+    bubble.innerHTML = `¡Tira ${window._currentName}!<div style="content: ''; position: absolute; bottom: -4px; left: 15px; border-width: 5px 5px 0; border-style: solid; border-color: white transparent transparent transparent;"></div>`;
+    bubble.style.opacity = '1';
+  }
+  
+  // Wait 1.5s then play kick animation
+  setTimeout(() => {
+    if (window._lottieAnim) {
+      window._lottieAnim.goToAndPlay(0, true);
+    }
+  }, 1500);
+}
+
+function launchBall(name) {
+  if (!name) return;
+  
+  // Create ball element
+  const el = document.createElement('div');
+  el.className = 'shooter-ball';
+  const svgBall = `<svg viewBox="0 0 496 512" width="1.2em" height="1.2em" style="filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));">
+    <path fill="#f1f2ef" d="M248,8C111.03,8,0,119.03,0,256S111.03,504,248,504,496,392.97,496,256,384.97,8,248,8Z"/>
+    <path fill="#161b15" d="M248 8C111.03 8 0 119.03 0 256c0 136.97 111.03 248 248 248s248-111.03 248-248S384.97 8 248 8zm124.97 122.95l-33.15 67.5-74.1-23.75-23.36-74.45c50.04-10.42 97.45 6.46 130.61 30.7zM248 206.5l49.23 35.77-18.8 57.86h-60.85l-18.81-57.86L248 206.5zm-88.75-26.68l-74.1 23.75-33.15-67.5c33.16-24.23 80.57-41.12 130.61-30.7l-23.36 74.45zm-63.53 103.54l68.22 31.78-8.24 77.29c-41.56-18.42-73.68-54.83-84.34-100.22l24.36-8.85zm106.87 141.4l11.66-77 53.75-38.96 53.75 38.96 11.66 77c-39.77 17.65-85.34 17.65-130.82 0zm139.75-64.1l-8.24-77.29 68.22-31.78 24.36 8.85c-10.66 45.4-42.78 81.8-84.34 100.22z"/>
+  </svg>`;
+  el.innerHTML = `<span class="ball-icon">${svgBall}</span><span style="color: white; text-shadow: 0 0 4px rgba(0,0,0,0.8);">${name}</span>`;
+  
+  // Use the single full-width lane
+  const track = document.getElementById('shooter-track');
+  if (!track) return;
+  track.appendChild(el);
+  
+  // Random starting Y position (centered around middle)
+  const startY = 40 + Math.random() * 20; // 40% to 60%
+  
+  // Random target Y position on the right
+  const targetY = 10 + Math.random() * 80; // 10% to 90%
+  
+  let keyframes = [];
+  let outcome = '';
+  let duration = 3000 + Math.random() * 1000; // 3s to 4s
+  
+  // Decide what happens based on targetY
+  // The goal is approximately between 30% and 70% height
+  let effectTime = duration * 0.95;
+
+  if (targetY > 35 && targetY < 65) {
+    // GOAL! Clean shot into the net
+    outcome = 'goal';
+    const originalDuration = duration;
+    duration += 1500; // Add 1.5s for rolling in the net
+    const flightEnd = originalDuration / duration;
+    const dropY = targetY + 15; // Drops to the floor of the net
+    effectTime = originalDuration; // Show confetti when it hits the net
+    
+    keyframes = [
+      { left: '-50px', top: `${startY}%`, opacity: 1, transform: 'scale(0.8)' },
+      { left: 'calc(100% - 40px)', top: `${targetY}%`, opacity: 1, transform: 'scale(0.9)', offset: flightEnd },
+      { left: 'calc(100% - 20px)', top: `${dropY}%`, opacity: 1, transform: 'scale(0.9)', offset: flightEnd + 0.1 },
+      { left: 'calc(100% - 15px)', top: `${dropY}%`, opacity: 1, transform: 'scale(0.9)', offset: 0.95 },
+      { left: 'calc(100% - 15px)', top: `${dropY}%`, opacity: 0, transform: 'scale(0.8)' }
+    ];
+  } else if ((targetY >= 25 && targetY <= 35) || (targetY >= 65 && targetY <= 75)) {
+    // HIT THE POST!
+    outcome = 'post';
+    const bounceY = targetY > 50 ? targetY + 30 : targetY - 30; 
+    keyframes = [
+      { left: '-50px', top: `${startY}%`, opacity: 1, transform: 'scale(0.8)' },
+      { left: 'calc(100% - 50px)', top: `${targetY}%`, opacity: 1, offset: 0.8, transform: 'scale(0.9)' }, // hits post
+      { left: 'calc(100% - 150px)', top: `${bounceY}%`, opacity: 0, transform: 'rotate(180deg) scale(0.6)' } // bounces away
+    ];
+  } else {
+    // MISS! Wide shot
+    outcome = 'miss';
+    keyframes = [
+      { left: '-50px', top: `${startY}%`, opacity: 1, transform: 'scale(0.8)' },
+      { left: 'calc(100% + 50px)', top: `${targetY}%`, opacity: 1, transform: 'scale(0.7)', offset: 0.95 },
+      { left: 'calc(100% + 50px)', top: `${targetY}%`, opacity: 0, transform: 'scale(0.7)' }
+    ];
+  }
+  
+  const animation = el.animate(keyframes, {
+    duration: duration,
+    easing: 'linear',
+    fill: 'forwards'
+  });
+  
+  setTimeout(() => {
+    // Confetti effect only for goals
+    if (outcome === 'goal' && typeof confetti !== 'undefined') {
+      const rect = track.getBoundingClientRect();
+      const yPos = (rect.top + rect.height * 0.2) / window.innerHeight;
+      
+      confetti({
+        particleCount: 20,
+        spread: 40,
+        origin: { x: 0.88, y: yPos },
+        colors: ['#00d2d3', '#ff9ff3', '#feca57'],
+        disableForReducedMotion: true,
+        zIndex: 100,
+        scalar: 0.5,
+        startVelocity: 15
+      });
+    }
+    
+    // Floating text for all outcomes
+    const floatingText = document.createElement('div');
+    
+    if (outcome === 'goal') {
+       floatingText.textContent = '¡GOL!';
+       floatingText.style.color = '#ff9ff3';
+       floatingText.style.textShadow = '0 0 6px rgba(255,159,243,0.8), 1px 1px 0px #000';
+    } else if (outcome === 'post') {
+       floatingText.textContent = '¡AL PALO!';
+       floatingText.style.color = '#feca57';
+       floatingText.style.textShadow = '0 0 6px rgba(254,202,87,0.8), 1px 1px 0px #000';
+    } else {
+       floatingText.textContent = '¡FUERA!';
+       floatingText.style.color = '#ff6b6b';
+       floatingText.style.textShadow = '0 0 6px rgba(255,107,107,0.8), 1px 1px 0px #000';
+    }
+    
+    floatingText.style.position = 'absolute';
+    floatingText.style.right = '20px';
+    floatingText.style.top = '-10px';
+    floatingText.style.fontWeight = '900';
+    floatingText.style.fontSize = '1.2rem';
+    floatingText.style.zIndex = '50';
+    floatingText.style.pointerEvents = 'none';
+    track.appendChild(floatingText);
+    
+    const anim = floatingText.animate([
+      { transform: 'translateY(0) scale(0.5)', opacity: 0 },
+      { transform: 'translateY(-10px) scale(1.1)', opacity: 1, offset: 0.2 },
+      { transform: 'translateY(-20px) scale(1)', opacity: 1, offset: 0.8 },
+      { transform: 'translateY(-30px) scale(0.8)', opacity: 0 }
+    ], { duration: 2000, easing: 'ease-out' });
+    
+    anim.onfinish = () => floatingText.remove();
+  }, effectTime);
+  
+  animation.onfinish = () => el.remove();
+}
+
+// Initialize Lottie player animation
+const lottieContainer = document.getElementById('lottie-player');
+if (lottieContainer && typeof lottie !== 'undefined') {
+  window._lottieAnim = lottie.loadAnimation({
+    container: lottieContainer,
+    renderer: 'svg',
+    loop: false,
+    autoplay: false,
+    path: 'player-kick.json'
+  });
+  
+  // Fire ball when kick connects
+  window._lottieAnim.addEventListener('enterFrame', (e) => {
+    const frame = Math.floor(e.currentTime);
+    if (frame >= 24 && frame <= 26 && !window._kickFired && window._currentName) {
+      window._kickFired = true;
+      const bubble = document.getElementById('shooter-bubble');
+      if (bubble) bubble.style.opacity = '0';
+      
+      launchBall(window._currentName);
+      window._currentName = null;
+      
+      // Wait for ball to fly, then do next kick
+      setTimeout(doNextKick, 3500);
+    }
+  });
+}

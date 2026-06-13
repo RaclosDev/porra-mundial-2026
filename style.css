@@ -845,3 +845,82 @@ body {
     content: "•";
     color: #00d2d3;
 }
+
+/* ===== Football Shooter ===== */
+.shooter-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  overflow: hidden;
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.shooter-player {
+  flex: 0 0 auto;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+}
+
+.shooter-goal {
+  flex: 0 0 auto;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+}
+
+.shooter-lane {
+  flex: 1;
+  overflow: hidden;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.center-header {
+  flex: 0 0 auto;
+  padding: 0 15px;
+  z-index: 10;
+}
+
+.shooter-ball {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: white;
+  left: -150px;
+}
+
+.shooter-ball .ball-icon {
+  font-size: 1.1rem;
+  animation: ball-spin 0.4s linear infinite;
+}
+
+@keyframes ball-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 900px) {
+  .shooter-container {
+    flex-direction: column;
+    gap: 5px;
+  }
+  .shooter-player, .shooter-goal {
+    display: none;
+  }
+  .shooter-lane {
+    width: 100%;
+    margin: 5px 0;
+  }
+  .center-header {
+    padding: 0;
+  }
+}
