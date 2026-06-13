@@ -24,18 +24,60 @@ const onlineUsersRef = ref(database, 'onlineUsers');
 onValue(connectedRef, (snap) => {
   if (snap.val() === true) {
     const myConnectionsRef = push(onlineUsersRef);
+    window.myPresenceRef = myConnectionsRef;
     onDisconnect(myConnectionsRef).remove();
-    set(myConnectionsRef, true);
+    
+    // Obtener nombre actual, o de la cookie, o 'Anónimo'
+    const nameInput = document.getElementById('user-name');
+    let name = nameInput && nameInput.value.trim() ? nameInput.value.trim() : "";
+    if (!name && localStorage.getItem("my_bet_name")) {
+        name = localStorage.getItem("my_bet_name");
+    }
+    name = name || "Anónimo";
+    set(myConnectionsRef, name);
   }
 });
 
+// Escuchar cambios en el input de nombre para actualizar la presencia
+const nameInputEl = document.getElementById('user-name');
+if (nameInputEl) {
+  nameInputEl.addEventListener('input', (e) => {
+    if (window.myPresenceRef) {
+      set(window.myPresenceRef, e.target.value.trim() || "Anónimo");
+    }
+  });
+}
+
 onValue(onlineUsersRef, (snap) => {
-  const onlineCount = snap.exists() ? Object.keys(snap.val()).length : 0;
+  const data = snap.val() || {};
+  const onlineCount = Object.keys(data).length;
   const counterEl = document.getElementById('online-counter');
+  
   if (counterEl) {
-    // Si es 1, no ponemos plural
-    counterEl.innerText = `👁️ ${onlineCount} ${onlineCount === 1 ? 'online' : 'online'}`;
+    const textEl = document.getElementById('online-counter-text');
+    if (textEl) {
+        textEl.innerText = `👁️ ${onlineCount} ${onlineCount === 1 ? 'online' : 'online'}`;
+    }
     counterEl.style.display = onlineCount > 0 ? 'inline-block' : 'none';
+    
+    // Rellenar la lista HTML del nuevo tooltip bonito
+    const names = Object.values(data);
+    const listEl = document.getElementById('online-users-list');
+    if (listEl) {
+        listEl.innerHTML = names.map(n => `<li>${n}</li>`).join("");
+    }
+    
+    // Para móvil: toggle de la visibilidad al tocar (el :hover de CSS ya suele bastar, 
+    // pero por si acaso, forzamos un pequeño "toque" visual en JS)
+    counterEl.onclick = function() {
+        const tooltip = document.getElementById('online-tooltip');
+        if (tooltip) {
+            const isVisible = tooltip.style.visibility === 'visible';
+            tooltip.style.visibility = isVisible ? '' : 'visible';
+            tooltip.style.opacity = isVisible ? '' : '1';
+            tooltip.style.top = isVisible ? '' : '150%';
+        }
+    };
   }
 });
 
@@ -105,10 +147,8 @@ window.compareTeams = function(a, b, groupName) {
 function updateOfficialUI() {
   if (window.officialResultsHash) {
      const n = document.getElementById("user-name").value;
-     const b = document.getElementById("user-bet-name").value;
      loadHash(window.officialResultsHash);
      document.getElementById("user-name").value = n;
-     document.getElementById("user-bet-name").value = b;
   }
   const isAdmin = checkAdmin(document.getElementById("user-name").value.trim());
   
@@ -195,6 +235,31 @@ window.acceptBet = function(key) {
   set(ref(database, `bets/${key}/paid`), true)
     .then(() => alert("¡Apuesta confirmada! Ahora contará en la clasificación."))
     .catch(e => alert("Error al confirmar: " + e.message));
+};
+
+window.editBetName = function(key, currentHash) {
+  const decoded = decodeHash(currentHash);
+  if (!decoded) return alert("No se pudo decodificar la apuesta.");
+
+  const newUserName = prompt("Edita el nombre del jugador:", decoded.user || "");
+  if (newUserName === null) return; // cancelado
+
+  const newBetName = prompt("Edita el nombre de la apuesta (o déjalo igual):", decoded.bet || newUserName);
+  if (newBetName === null) return; // cancelado
+
+  if (newUserName.trim() === "") return alert("El nombre no puede estar vacío");
+
+  // Actualizamos los datos
+  decoded.user = newUserName.trim();
+  decoded.bet = newBetName.trim();
+
+  // Volvemos a codificar
+  const newHash = btoa(unescape(encodeURIComponent(JSON.stringify(decoded))));
+
+  // Guardamos SOLO el hash, sin machacar el estado de si ha pagado o no
+  set(ref(database, 'bets/' + key + '/hash'), newHash)
+    .then(() => alert("¡Nombre actualizado correctamente!"))
+    .catch(e => alert("Error al actualizar: " + e.message));
 };
 
 window.viewBet = function(hash) {
@@ -488,17 +553,41 @@ setTimeout(updateNewsTicker, 3000); // Initial load
 function setupNavigation() {
   const views = ["view-home", "view-radar", "view-bracket", "view-leaderboard", "view-rules", "view-group-stage", "view-thirds", "view-stats", "view-search"];
   
-  window.switchView = function(viewId) {
+  window.switchView = function(viewId, pushState = true) {
     views.forEach(id => {
       const el = document.getElementById(id);
       if (el) el.classList.remove("active");
     });
-    document.getElementById(viewId).classList.add("active");
+    const targetEl = document.getElementById(viewId);
+    if(targetEl) targetEl.classList.add("active");
     window.currentViewId = viewId;
+    
+    // Save state for F5 reloads
+    localStorage.setItem("lastViewId", viewId);
+    
+    // Push history state so the Back button works
+    if (pushState) {
+        history.pushState({ viewId: viewId }, "", "#" + viewId.replace("view-", ""));
+    }
+
     if (viewId === "view-bracket") {
       renderInteractiveBracket();
     }
   }
+
+  // Handle Back button
+  window.addEventListener("popstate", (e) => {
+      if (e.state && e.state.viewId) {
+          switchView(e.state.viewId, false);
+      } else {
+          const hash = window.location.hash.replace("#", "");
+          if (hash && views.includes("view-" + hash)) {
+              switchView("view-" + hash, false);
+          } else {
+              switchView("view-home", false);
+          }
+      }
+  });
 
   document.getElementById("nav-home").addEventListener("click", () => switchView("view-home"));
   document.getElementById("nav-radar")?.addEventListener("click", () => switchView("view-radar"));
@@ -630,171 +719,8 @@ function setupNavigation() {
     const part = decodeHash(hash);
     if (!part) return;
     
-    window.previousViewForReadOnly = document.querySelector('.view-section.active')?.id || "view-leaderboard";
-    window.isReadOnly = true;
-    const bracketToolbar = document.querySelector(".bracket-toolbar");
-    if (bracketToolbar) bracketToolbar.style.display = "none";
-    document.getElementById("read-only-banner").style.display = "block";
-    document.getElementById("thirds-read-only-banner").style.display = "block";
-    document.getElementById("bracket-read-only-banner").style.display = "block";
-    document.getElementById("read-only-name").textContent = part.user;
-    document.getElementById("thirds-read-only-name").textContent = part.user;
-    document.getElementById("bracket-read-only-name").textContent = part.user;
-    
-    // Set Scorer in Banners
-    document.getElementById("read-only-scorer-name").textContent = part.scorer || "Ninguno";
-    document.getElementById("thirds-read-only-scorer-name").textContent = part.scorer || "Ninguno";
-    document.getElementById("bracket-read-only-scorer-name").textContent = part.scorer || "Ninguno";
-    
-    // Hide UI elements not needed in Read-Only
-    const groupDesc = document.getElementById("group-stage-desc");
-    if(groupDesc) groupDesc.style.display = "none";
-    const thirdsDesc = document.getElementById("thirds-stage-desc");
-    if(thirdsDesc) thirdsDesc.style.display = "none";
-    const btnGenBracket = document.getElementById("btn-generate-bracket");
-    if(btnGenBracket) btnGenBracket.style.display = "none";
-    const btnGoThirds = document.getElementById("btn-go-thirds");
-    if(btnGoThirds) btnGoThirds.style.display = "none";
-    
-    // Hide save button
-    const saveBtn = document.getElementById("btn-save-bet");
-    if(saveBtn) saveBtn.style.display = "none";
-    
-    // Populate Groups
-    if (part.groups) {
-      Object.keys(part.groups).forEach(g => {
-        const sel1 = document.getElementById(`select-g${g}-1`);
-        const sel2 = document.getElementById(`select-g${g}-2`);
-        const sel3 = document.getElementById(`select-g${g}-3`);
-        const getOfficialPositionAndMp = (groupName, teamName) => {
-            if (!window.officialPoints || !window.officialPoints[groupName] || !window.groupOdds) return {pos: -1, mp: 0};
-            const teams = window.groupOdds[groupName].map(t => {
-                const safeKey = t.name.replace(/[.#$\[\]]/g, "");
-                const officialData = window.officialPoints[groupName][safeKey];
-                const pts = (typeof officialData === 'object' && officialData !== null) ? (officialData.pts || 0) : (officialData || 0);
-                const diff = officialData?.diff || 0;
-                const gls = officialData?.gls || 0;
-                const mp = officialData?.mp || 0;
-                return { name: t.name, pts, diff, gls, mp };
-            });
-            teams.sort((a,b) => {
-                if(b.pts !== a.pts) return b.pts - a.pts;
-                if(b.diff !== a.diff) return b.diff - a.diff;
-                return b.gls - a.gls;
-            });
-            const pos = teams.findIndex(t => t.name === teamName) + 1;
-            const mp = teams.find(t => t.name === teamName)?.mp || 0;
-            return {pos, mp};
-        };
-
-        const applyColor = (sel, groupName, teamName, expectedPos) => {
-            if (!sel || !teamName) return;
-            const {pos, mp} = getOfficialPositionAndMp(groupName, teamName);
-            if (mp > 0) {
-                if (pos === expectedPos) {
-                    sel.style.backgroundColor = "rgba(46, 204, 113, 0.25)";
-                    sel.style.color = "#2ecc71";
-                    sel.style.borderColor = "#2ecc71";
-                } else if (pos <= 3) {
-                    sel.style.backgroundColor = "rgba(52, 152, 219, 0.25)";
-                    sel.style.color = "#3498db";
-                    sel.style.borderColor = "#3498db";
-                } else {
-                    sel.style.backgroundColor = "rgba(231, 76, 60, 0.25)";
-                    sel.style.color = "#e74c3c";
-                    sel.style.borderColor = "#e74c3c";
-                }
-            } else {
-                sel.style.backgroundColor = "";
-                sel.style.color = "";
-                sel.style.borderColor = "";
-            }
-        };
-
-        if (sel1 && part.groups[g][0]) {
-            sel1.value = part.groups[g][0];
-            applyColor(sel1, g, part.groups[g][0], 1);
-        }
-        if (sel2 && part.groups[g][1]) {
-            sel2.value = part.groups[g][1];
-            applyColor(sel2, g, part.groups[g][1], 2);
-        }
-        if (sel3 && part.groups[g][2]) {
-            sel3.value = part.groups[g][2];
-            applyColor(sel3, g, part.groups[g][2], 3);
-        }
-        
-        // Update labels
-        const btn = document.getElementById(`third-btn-${g}`);
-        if(btn) {
-           const teamName = part.groups[g][2] || "-";
-           let flagHtml = "";
-           if (teamName !== "-" && !teamName.includes("º")) {
-               flagHtml = `<img src="https://flagcdn.com/16x12/${getCountryCode(teamName)}.png" alt="" style="margin-right:5px; vertical-align:middle;">`;
-           }
-           btn.querySelector(".t-name").innerHTML = `${flagHtml}${teamName}`;
-           if (part.thirds && part.thirds.includes(part.groups[g][2])) {
-              btn.classList.add("selected");
-           } else {
-              btn.classList.remove("selected");
-           }
-        }
-      });
-      validateGroupStage();
-    }
-    
-    // Populate Bracket
-    const parseRound = (roundData) => {
-      if(!roundData) return [];
-      return roundData.map((m, i) => ({
-         home: findTeamObj(m[0]),
-         away: findTeamObj(m[1]),
-         id: 'L_' + i // dummy
-      }));
-    };
-    
-    if (part.r32) {
-       bracketState.r32.left = parseRound(part.r32.slice(0, 8));
-       bracketState.r32.right = parseRound(part.r32.slice(8, 16));
-    }
-    if (part.r16) {
-       bracketState.r16.left = parseRound(part.r16.slice(0, 4));
-       bracketState.r16.right = parseRound(part.r16.slice(4, 8));
-    }
-    if (part.qf) {
-       bracketState.qf.left = parseRound(part.qf.slice(0, 2));
-       bracketState.qf.right = parseRound(part.qf.slice(2, 4));
-    }
-    if (part.sf) {
-       bracketState.sf.left = parseRound(part.sf.slice(0, 1));
-       bracketState.sf.right = parseRound(part.sf.slice(1, 2));
-    }
-    if (part.final) {
-       bracketState.final = { home: findTeamObj(part.final[0]), away: findTeamObj(part.final[1]) };
-    }
-    if (part.champion) {
-       bracketState.champion = findTeamObj(part.champion);
-    }
-    if (part.thirdPlaceMatch) {
-       bracketState.thirdPlaceMatch = { home: findTeamObj(part.thirdPlaceMatch[0]), away: findTeamObj(part.thirdPlaceMatch[1]) };
-    }
-    if (part.thirdPlaceWinner) {
-       bracketState.thirdPlaceWinner = findTeamObj(part.thirdPlaceWinner);
-    }
-    
-    if (part.scorer) {
-       const input = document.getElementById("top-scorer-select");
-       if(input) input.value = part.scorer;
-    }
-    
-    // Disable inputs
-    document.querySelectorAll(".group-slot select").forEach(s => s.disabled = true);
-    document.querySelectorAll(".third-checkbox").forEach(c => c.style.pointerEvents = "none");
-    const topScorerSelect = document.getElementById("top-scorer-select");
-    if(topScorerSelect) topScorerSelect.disabled = true;
-
-    if(typeof updateThirdsContainers === "function") updateThirdsContainers();
-    switchView("view-group-stage");
+    // Simplemente abrimos la tarjeta de resumen (sin cargar el formulario obsoleto de fondo)
+    showPointsBreakdown(hash);
   };
 }
 
@@ -1601,12 +1527,12 @@ function renderInteractiveBracket() {
 
 document.getElementById("btn-save-hash").addEventListener("click", () => {
   const userName = document.getElementById("user-name").value.trim();
-  const betName = document.getElementById("user-bet-name").value.trim();
+  const betName = userName; // Default the bet name to the username since the separate input was removed
   const topScorer = document.getElementById("top-scorer-select").value.trim();
   const isAdmin = checkAdmin(userName);
 
-  if (!userName || !betName) {
-    alert("¡Por favor, rellena tu Nombre y el Nombre de la Apuesta en la parte superior antes de generar el código!");
+  if (!userName) {
+    alert("¡Por favor, rellena tu Nombre en la parte superior antes de generar el código!");
     window.scrollTo({ top: 0, behavior: 'smooth' });
     return;
   }
@@ -1700,6 +1626,18 @@ setupNavigation();
 setupGroupStageView();
 setupSearchTeams();
 
+// Restore state on load
+const initialHash = window.location.hash.replace("#", "");
+const lastView = localStorage.getItem("lastViewId");
+const validViews = ["view-home", "view-radar", "view-bracket", "view-leaderboard", "view-rules", "view-group-stage", "view-thirds", "view-stats", "view-search"];
+if (initialHash && validViews.includes("view-" + initialHash)) {
+    switchView("view-" + initialHash, false);
+} else if (lastView && validViews.includes(lastView)) {
+    switchView(lastView, false);
+} else {
+    switchView("view-home", false);
+}
+
 // Make globally accessible for inline onclick handlers
 window.fillGroupSlot = fillGroupSlot;
 window.advanceTeam = advanceTeam;
@@ -1781,17 +1719,35 @@ function calculatePoints(participant, official, officialPoints = window.official
       };
 
       // P1 Guess
-      if (isPassed(p1)) award(10, 'r1', `Grupo ${g}: ${p1} pasa de fase`);
-      if (actualO1 && p1 === actualO1) award(10, 'r1', `Grupo ${g}: ${p1} acierto posición exacta (1º)`);
+      let p1Passed = isPassed(p1);
+      let p1Exact = actualO1 && p1 === actualO1;
+      if (p1Passed && p1Exact) {
+          award(20, 'r1', `Grupo ${g}: ${p1} clasificado en posición exacta (1º)`);
+      } else {
+          if (p1Passed) award(10, 'r1', `Grupo ${g}: ${p1} clasificado a la siguiente fase`);
+          if (p1Exact) award(10, 'r1', `Grupo ${g}: ${p1} acierto posición exacta (1º)`);
+      }
       
       // P2 Guess
-      if (isPassed(p2)) award(10, 'r1', `Grupo ${g}: ${p2} pasa de fase`);
-      if (actualO2 && p2 === actualO2) award(10, 'r1', `Grupo ${g}: ${p2} acierto posición exacta (2º)`);
+      let p2Passed = isPassed(p2);
+      let p2Exact = actualO2 && p2 === actualO2;
+      if (p2Passed && p2Exact) {
+          award(20, 'r1', `Grupo ${g}: ${p2} clasificado en posición exacta (2º)`);
+      } else {
+          if (p2Passed) award(10, 'r1', `Grupo ${g}: ${p2} clasificado a la siguiente fase`);
+          if (p2Exact) award(10, 'r1', `Grupo ${g}: ${p2} acierto posición exacta (2º)`);
+      }
       
       // P3 Guess
       const p3SelectedToPass = participant.thirds && participant.thirds.includes(p3);
-      if (p3SelectedToPass && isPassed(p3)) award(10, 'r1', `Grupo ${g}: ${p3} pasa de fase`);
-      if (actualO3 && p3 === actualO3) award(10, 'r1', `Grupo ${g}: ${p3} acierto posición exacta (3º)`);
+      let p3Passed = p3SelectedToPass && isPassed(p3);
+      let p3Exact = actualO3 && p3 === actualO3;
+      if (p3Passed && p3Exact) {
+          award(20, 'r1', `Grupo ${g}: ${p3} clasificado en posición exacta (3º)`);
+      } else {
+          if (p3Passed) award(10, 'r1', `Grupo ${g}: ${p3} clasificado a la siguiente fase`);
+          if (p3Exact) award(10, 'r1', `Grupo ${g}: ${p3} acierto posición exacta (3º)`);
+      }
     });
   }
 
@@ -2173,7 +2129,8 @@ function renderLeaderboard() {
     tr.innerHTML = `
       <td style="font-size: 1.2em; text-align: center;">${rankDisplay}</td>
       <td>
-        <span title="Ver Apuesta de ${r.name}"><strong>${r.name}</strong></span><br>
+        <span title="Ver Apuesta de ${r.name}"><strong>${r.name}</strong></span>
+        ${isAdmin ? `<button onclick="editBetName('${r.key}', '${r.hash}')" style="background:none;border:none;cursor:pointer;font-size:0.9em;margin-left:5px;" title="Editar Nombre/Apuesta">✏️</button>` : ''}<br>
         <span style="font-size: 0.85em; color: var(--text-muted);">${r.betName}</span>
         ${!r.paid ? '<span style="font-size:10px;background:orange;color:white;padding:2px;border-radius:3px;margin-left:5px;">Pendiente</span>' : ''}
         ${isAdmin && !r.paid ? `<button onclick="acceptBet('${r.key}')" style="background:green;color:white;border:none;border-radius:4px;cursor:pointer;padding:2px 6px;margin-left:5px;" title="Confirmar Bizum">✅</button>` : ''}
@@ -2186,7 +2143,6 @@ function renderLeaderboard() {
       </td>
       <td style="color: var(--accent-color); font-weight: bold; font-size: 1.1em; text-align: center;">
         ${r.paid ? r.points.total + ' pts' : '-'}
-        ${r.paid && r.points.total > 0 ? `<button onclick="showPointsBreakdown('${r.hash}')" style="background:none;border:none;cursor:pointer;font-size:1em;vertical-align:middle;margin-left:5px;" title="Ver desglose de puntos">ℹ️</button>` : ''}
       </td>
       <td>${r.paid ? r.points.r1 : '-'}</td>
       <td>${r.paid ? r.points.r32 : '-'}</td>
@@ -2232,10 +2188,53 @@ window.showPointsBreakdown = function(hash) {
   const modalBody = document.getElementById("points-breakdown-body");
   if (!modal || !modalBody) return;
   
-  let html = `<h3 style="color: var(--accent-color); margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Desglose de Puntos: ${part.user}</h3>`;
+  const f = (t) => t && !t.includes("º") && getCountryCode(t) !== "xx" ? `<img src="https://flagcdn.com/16x12/${getCountryCode(t)}.png" alt="" style="margin-right:4px;vertical-align:middle;">${t}` : t;
+  
+  let html = `<div style="display: flex; flex-wrap: wrap; gap: 20px;">`;
+  
+  // COLUMNA IZQUIERDA: Apuesta del usuario
+  html += `<div style="flex: 1; min-width: 250px;">`;
+  html += `<h3 style="color: var(--accent-color); margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Apuesta de ${part.user}</h3>`;
+  html += `<div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; max-height: 80vh; overflow-y: auto; font-size: 0.9em; line-height: 1.5;">`;
+  
+  if (part.groups) {
+    html += `<strong style="color:#00d2d3; display:block; margin-bottom: 10px; font-size: 1.3em;">Fase de Grupos:</strong>`;
+    html += `<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 25px;">`;
+    Object.keys(part.groups).forEach(g => {
+        html += `<div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; text-align: left;">`;
+        html += `<div style="font-weight: bold; color: var(--accent-color); margin-bottom: 8px; font-size: 1.1em; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Grupo ${g}</div>`;
+        html += `<div style="font-size: 1em; color: white; margin-bottom: 4px;">🥇 ${f(part.groups[g][0])}</div>`;
+        html += `<div style="font-size: 1em; color: #ddd; margin-bottom: 4px;">🥈 ${f(part.groups[g][1])}</div>`;
+        html += `<div style="font-size: 1em; color: #bbb;">🥉 ${f(part.groups[g][2])}</div>`;
+        html += `</div>`;
+    });
+    html += `</div>`;
+  }
+  
+  if (part.thirds && part.thirds.length > 0) {
+      html += `<strong style="color:#00d2d3; display:block; margin-top: 15px; margin-bottom: 10px; font-size: 1.1em;">Mejores Terceros:</strong>`;
+      html += `<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px;">`;
+      part.thirds.forEach(t => {
+          html += `<span style="background: rgba(0, 210, 211, 0.15); border: 1px solid rgba(0, 210, 211, 0.3); color: #00d2d3; padding: 4px 10px; border-radius: 12px; font-size: 0.85em;">${f(t)}</span>`;
+      });
+      html += `</div>`;
+  }
+  
+  if (part.champion) {
+      html += `<strong style="color:#fbbf24; display:block; margin-top: 15px; font-size: 1.1em;">Campeón:</strong><div style="margin-left: 10px; margin-bottom: 10px; color: #fbbf24; font-weight: bold;">🏆 ${f(part.champion)}</div>`;
+  }
+  if (part.scorer) {
+      html += `<strong style="color:#ff9f43; display:block; margin-top: 15px; font-size: 1.1em;">Pichichi:</strong><div style="margin-left: 10px; margin-bottom: 10px; color: #ff9f43;">⚽ ${part.scorer}</div>`;
+  }
+  
+  html += `</div></div>`; // Fin Columna Izquierda
+  
+  // COLUMNA DERECHA: Puntos
+  html += `<div style="flex: 1; min-width: 250px;">`;
+  html += `<h3 style="color: var(--accent-color); margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Desglose de Puntos</h3>`;
   
   if (points.log && points.log.length > 0) {
-    html += `<ul style="list-style-type: none; padding-left: 0; margin-bottom: 20px;">`;
+    html += `<ul style="list-style-type: none; padding-left: 0; margin-bottom: 20px; max-height: 80vh; overflow-y: auto; padding-right: 5px;">`;
     points.log.forEach(item => {
       html += `<li style="background: rgba(255, 255, 255, 0.05); padding: 8px 12px; margin-bottom: 5px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
         <span style="font-size: 0.9em; color: var(--text-color);">${item.msg}</span>
@@ -2249,6 +2248,9 @@ window.showPointsBreakdown = function(hash) {
   } else {
     html += `<p style="text-align: center; color: var(--text-muted); padding: 20px 0;">Todavía no hay puntos asignados.</p>`;
   }
+  html += `</div>`; // Fin Columna Derecha
+  
+  html += `</div>`; // Fin Layout Flex
   
   modalBody.innerHTML = html;
   modal.style.display = "flex";

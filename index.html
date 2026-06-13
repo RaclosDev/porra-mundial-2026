@@ -23,13 +23,19 @@
 <body>
     <header class="top-bar">
         <div class="header-left">
-            <h1 id="site-title" style="cursor: pointer; display: flex; align-items: center; gap: 10px;" title="Haz doble clic para abrir el acceso de administrador">
-                MUNDIAL 2026 - PORRA
-                <span id="online-counter" style="display: none; font-size: 0.9rem; font-weight: normal; background: rgba(0, 210, 211, 0.1); color: #00d2d3; padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(0, 210, 211, 0.3); text-shadow: none;">👁️ 1 online</span>
-            </h1>
+            <div style="display: flex; align-items: center; gap: 15px; flex-wrap: nowrap;">
+                <h1 id="site-title" style="cursor: pointer; margin: 0; white-space: nowrap;">
+                    MUNDIAL 2026 - PORRA</h1>
+                <div id="online-counter" class="tooltip-container" style="display: none; font-size: 0.9rem; font-weight: normal; background: rgba(0, 210, 211, 0.1); color: #00d2d3; padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(0, 210, 211, 0.3); text-shadow: none; white-space: nowrap; cursor: pointer; position: relative;">
+                    <span id="online-counter-text">👁️ 1 online</span>
+                    <div id="online-tooltip" class="custom-tooltip">
+                        <div class="tooltip-header">Conectados ahora:</div>
+                        <ul id="online-users-list"></ul>
+                    </div>
+                </div>
+            </div>
             <div class="user-info" id="user-info-bar" style="display: none;">
                 <input type="text" id="user-name" placeholder="Tu Nombre">
-                <input type="text" id="user-bet-name" placeholder="Nombre Apuesta">
             </div>
         </div>
         <div class="header-center">
@@ -591,7 +597,7 @@
     </div>
     <!-- POINTS BREAKDOWN MODAL -->
     <div id="points-breakdown-modal" class="modal" style="display: none; z-index: 999999;">
-        <div class="modal-content" style="max-width: 500px; text-align: left; max-height: 80vh; overflow-y: auto;">
+        <div class="modal-content" style="width: 95vw; max-width: 1600px; text-align: left; max-height: 95vh; overflow-y: auto;">
             <div id="points-breakdown-body"></div>
             <div class="action-buttons" style="margin-top: 20px;">
                 <button onclick="document.getElementById('points-breakdown-modal').style.display='none'"
