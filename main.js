@@ -90,8 +90,11 @@ window.nameToIdMap = {};
 window.manualTiebreakers = {}; // { groupName: { teamName: manualScore } }
 
 window.compareTeams = function(a, b, groupName) {
-  const statsA = (window.officialPoints[groupName] && window.officialPoints[groupName][a.name.replace(/[.#$\[\]]/g, "")]);
-  const statsB = (window.officialPoints[groupName] && window.officialPoints[groupName][b.name.replace(/[.#$\[\]]/g, "")]);
+  const safeNameA = a.name.replace(/[.#$\[\]]/g, "");
+  const safeNameB = b.name.replace(/[.#$\[\]]/g, "");
+  
+  const statsA = (window.officialPoints[groupName] && window.officialPoints[groupName][safeNameA]);
+  const statsB = (window.officialPoints[groupName] && window.officialPoints[groupName][safeNameB]);
   
   const ptsA = (typeof statsA === 'object' && statsA !== null) ? (statsA.pts || 0) : (statsA || 0);
   const ptsB = (typeof statsB === 'object' && statsB !== null) ? (statsB.pts || 0) : (statsB || 0);
@@ -105,18 +108,11 @@ window.compareTeams = function(a, b, groupName) {
   const mpA = (typeof statsA === 'object' && statsA !== null) ? (statsA.mp || 0) : 0;
   const mpB = (typeof statsB === 'object' && statsB !== null) ? (statsB.mp || 0) : 0;
 
-  // Equipos que no han jugado van al final
-  if ((mpA > 0 && mpB === 0) || (mpB > 0 && mpA === 0)) {
-      return mpB > 0 ? 1 : -1;
-  }
-
   if (ptsB !== ptsA) return ptsB - ptsA;
   if (diffB !== diffA) return diffB - diffA;
   if (glsB !== glsA) return glsB - glsA;
   
-  // Custom manual tiebreakers from the admin (if configured)
-  const safeNameA = a.name.replace(/[.#$\[\]]/g, "");
-  const safeNameB = b.name.replace(/[.#$\[\]]/g, "");
+  // Custom manual tiebreakers from the admin (OVERRIDE ONLY FOR EXACT TIES)
   const manualA = (window.manualTiebreakers[groupName] && window.manualTiebreakers[groupName][safeNameA]) || 0;
   const manualB = (window.manualTiebreakers[groupName] && window.manualTiebreakers[groupName][safeNameB]) || 0;
   if (manualB !== manualA) return manualB - manualA;
@@ -1394,21 +1390,49 @@ window.advanceTeam = advanceTeam;
 
 // Admin helper function to bump a team's tiebreaker score manually
 window.bumpTeam = function(groupName, teamName) {
-    const safeTeamName = teamName.replace(/[.#$\[\]]/g, "");
-    if (!window.manualTiebreakers[groupName]) {
-        window.manualTiebreakers[groupName] = {};
-    }
-    if (!window.manualTiebreakers[groupName][safeTeamName]) {
-        window.manualTiebreakers[groupName][safeTeamName] = 0;
-    }
-    window.manualTiebreakers[groupName][safeTeamName] += 1;
+    const teams = window.groupOdds[groupName];
+    // Sort them exactly as they are currently rendered to find who is above
+    const sortedTeams = [...teams].sort((a,b) => window.compareTeams(a, b, groupName));
+    const idx = sortedTeams.findIndex(t => t.name === teamName);
     
-    // Save to Firebase so everyone sees the updated ranking
-    set(ref(database, 'manualTiebreakers'), window.manualTiebreakers)
-      .then(() => {
-          renderHomeStandings();
-          syncWithApi(true); // Recalculate virtual groups
-      });
+    if (idx > 0) {
+        const teamAbove = sortedTeams[idx - 1];
+        
+        // Verificar si de verdad están empatados en todo lo matemático
+        const getStats = (tName) => {
+             const safe = tName.replace(/[.#$\[\]]/g, "");
+             const stats = (window.officialPoints[groupName] && window.officialPoints[groupName][safe]);
+             const pts = (typeof stats === 'object' && stats !== null) ? (stats.pts || 0) : (stats || 0);
+             const diff = (typeof stats === 'object' && stats !== null) ? (stats.diff || 0) : 0;
+             const gls = (typeof stats === 'object' && stats !== null) ? (stats.gls || 0) : 0;
+             return {pts, diff, gls};
+        };
+        const stCurr = getStats(teamName);
+        const stAbove = getStats(teamAbove.name);
+        
+        if (stCurr.pts !== stAbove.pts || stCurr.diff !== stAbove.diff || stCurr.gls !== stAbove.gls) {
+            alert(`⛔ No puedes usar la flecha con ${teamName}.\n\nSolo se puede desempatar manualmente a equipos que tengan exactamente los mismos Puntos, misma Diferencia de Goles y mismos Goles a Favor.\n\nActualmente el equipo superior (${teamAbove.name}) le supera en alguna de esas estadísticas.`);
+            return;
+        }
+
+        const safeTeamName = teamName.replace(/[.#$\[\]]/g, "");
+        const safeAboveName = teamAbove.name.replace(/[.#$\[\]]/g, "");
+        
+        if (!window.manualTiebreakers[groupName]) {
+            window.manualTiebreakers[groupName] = {};
+        }
+        
+        // Asignamos un punto más que el equipo que tiene encima, evitando sumar al infinito
+        const scoreAbove = window.manualTiebreakers[groupName][safeAboveName] || 0;
+        window.manualTiebreakers[groupName][safeTeamName] = scoreAbove + 1;
+        
+        // Guardar
+        set(ref(database, 'manualTiebreakers'), window.manualTiebreakers)
+          .then(() => {
+              renderHomeStandings();
+              syncWithApi(true); // Recalculate virtual groups
+          });
+    }
 };
 
 onValue(ref(database, 'manualTiebreakers'), (snapshot) => {
@@ -1654,6 +1678,22 @@ function calculatePoints(participant, official, officialPoints = window.official
   const offSF = official ? getTeams(official.sf) : [];
   const offFinal = official ? (official.final||[]) : [];
   
+  // Helper to check if a team has played at least 1 match
+  const hasPlayed = (teamName) => {
+    if (!teamName) return false;
+    if (offR32 && offR32.includes(teamName)) return true;
+    for (const g of Object.keys(window.groupOdds)) {
+      const found = window.groupOdds[g].find(t => t.name === teamName);
+      if (found) {
+        const safeKey = teamName.replace(/[.#$\[\]]/g, "");
+        const stats = (officialPoints[g] && officialPoints[g][safeKey]);
+        const mp = (typeof stats === 'object' && stats !== null) ? (stats.mp || 0) : 0;
+        return mp > 0;
+      }
+    }
+    return false;
+  };
+
   // Virtual groups tracking (only if all 4 teams played at least 1 match)
   const virtualGroups = {};
   let allVirtualThirds = [];
@@ -1671,8 +1711,14 @@ function calculatePoints(participant, official, officialPoints = window.official
        // ONLY if at least 1 match has been played in the group
        if (totalMatchesPlayed > 0) {
          teamsInGroup.sort((a,b) => window.compareTeams(a, b, g));
-         virtualGroups[g] = [teamsInGroup[0].name, teamsInGroup[1].name, teamsInGroup[2].name];
-         allVirtualThirds.push({ name: teamsInGroup[2].name, stats: teamsInGroup[2].stats });
+         virtualGroups[g] = [
+           hasPlayed(teamsInGroup[0].name) ? teamsInGroup[0].name : null,
+           hasPlayed(teamsInGroup[1].name) ? teamsInGroup[1].name : null,
+           hasPlayed(teamsInGroup[2].name) ? teamsInGroup[2].name : null
+         ];
+         if (hasPlayed(teamsInGroup[2].name)) {
+           allVirtualThirds.push({ name: teamsInGroup[2].name, stats: teamsInGroup[2].stats });
+         }
        }
     });
   }
@@ -1707,6 +1753,7 @@ function calculatePoints(participant, official, officialPoints = window.official
       
       const isPassed = (team) => {
          if (offR32.includes(team)) return true;
+         if (!hasPlayed(team)) return false;
          if (actualO1 === team || actualO2 === team) return true;
          if (official && official.thirds && official.thirds.includes(team)) return true;
          if (bestVirtualThirds.includes(team)) return true;
@@ -1740,10 +1787,17 @@ function calculatePoints(participant, official, officialPoints = window.official
       
       // P3 Guess
       const p3SelectedToPass = participant.thirds && participant.thirds.includes(p3);
-      let p3Passed = p3SelectedToPass && isPassed(p3);
+      let p3ActuallyPassed = isPassed(p3);
+      let p3Passed = p3SelectedToPass && p3ActuallyPassed;
       let p3Exact = actualO3 && p3 === actualO3;
+      
+      // Nueva regla: si el 3º puesto acertado NO se clasifica en la realidad, da 0 puntos de posición
+      if (!p3ActuallyPassed) {
+          p3Exact = false;
+      }
+
       if (p3Passed && p3Exact) {
-          award(20, 'r1', `Grupo ${g}: ${p3} clasificado en posición exacta (3º)`);
+          award(20, 'r1', `Grupo ${g}: ${p3} clasificado en posición exacta (Mejor 3º)`);
       } else {
           if (p3Passed) award(10, 'r1', `Grupo ${g}: ${p3} clasificado a la siguiente fase`);
           if (p3Exact) award(10, 'r1', `Grupo ${g}: ${p3} acierto posición exacta (3º)`);
@@ -2173,6 +2227,54 @@ document.getElementById("btn-save-points")?.addEventListener("click", () => {
     .then(() => alert("Puntos guardados correctamente."))
     .catch(e => alert("Error: " + e.message));
 });
+window.toggleRoundVisibility = function(btn, roundClass) {
+    // Si la opacidad es 0.5, significa que estaba oculto y lo vamos a mostrar
+    const isHidden = btn.style.opacity === '0.5';
+    document.querySelectorAll('.' + roundClass).forEach(e => {
+        e.style.display = isHidden ? 'flex' : 'none';
+    });
+    // Cambiamos el aspecto visual del botón
+    btn.style.opacity = isHidden ? '1' : '0.5';
+    btn.style.filter = isHidden ? 'none' : 'grayscale(100%)';
+    btn.style.transform = isHidden ? 'scale(1)' : 'scale(0.95)';
+};
+
+window.renderPointsLog = function(filter) {
+    const container = document.getElementById('points-log-container');
+    if(!container) return;
+    const logArr = window.currentPointsLog || [];
+    let filteredLog = [];
+    if(filter === 'groups') {
+        filteredLog = logArr.filter(i => i.stage === 'r1');
+    } else if(filter === 'knockout') {
+        filteredLog = logArr.filter(i => i.stage !== 'r1' && i.stage !== 'scorer');
+    } else {
+        filteredLog = logArr;
+    }
+    
+    let subtotal = 0;
+    let listHtml = '';
+    
+    if (filteredLog.length > 0) {
+        listHtml += `<ul style="list-style-type: none; padding-left: 0; margin-bottom: 20px; max-height: 80vh; overflow-y: auto; padding-right: 5px;">`;
+        filteredLog.forEach(item => {
+          subtotal += item.amount;
+          listHtml += `<li style="background: rgba(255, 255, 255, 0.05); padding: 8px 12px; margin-bottom: 5px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.9em; color: var(--text-color);">${item.msg}</span>
+            <span style="color: var(--primary-color); font-weight: bold; background: rgba(0, 210, 211, 0.2); padding: 2px 6px; border-radius: 4px;">+${item.amount}</span>
+          </li>`;
+        });
+        listHtml += `</ul>`;
+        listHtml += `<div style="text-align: right; font-size: 1.2em; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+          <strong>Subtotal de la fase: <span style="color: var(--accent-color);">${subtotal} pts</span></strong>
+        </div>`;
+    } else {
+        listHtml += `<p style="text-align: center; color: var(--text-muted); padding: 20px 0;">No hay puntos en esta fase.</p>`;
+    }
+    
+    container.innerHTML = listHtml;
+};
+
 window.showPointsBreakdown = function(hash) {
   const part = decodeHash(hash);
   if (!part) return;
@@ -2183,6 +2285,7 @@ window.showPointsBreakdown = function(hash) {
   }
   
   const points = calculatePoints(part, official);
+  window.currentPointsLog = points.log; // Store globally for renderPointsLog
   
   const modal = document.getElementById("points-breakdown-modal");
   const modalBody = document.getElementById("points-breakdown-body");
@@ -2190,69 +2293,187 @@ window.showPointsBreakdown = function(hash) {
   
   const f = (t) => t && !t.includes("º") && getCountryCode(t) !== "xx" ? `<img src="https://flagcdn.com/16x12/${getCountryCode(t)}.png" alt="" style="margin-right:4px;vertical-align:middle;">${t}` : t;
   
-  let html = `<div style="display: flex; flex-wrap: wrap; gap: 20px;">`;
+  let html = ``;
   
-  // COLUMNA IZQUIERDA: Apuesta del usuario
-  html += `<div style="flex: 1; min-width: 250px;">`;
-  html += `<h3 style="color: var(--accent-color); margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Apuesta de ${part.user}</h3>`;
-  html += `<div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; max-height: 80vh; overflow-y: auto; font-size: 0.9em; line-height: 1.5;">`;
+  // HEADER (Ocupa todo el ancho del modal)
+  html += `<div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+             <h3 style="color: var(--accent-color); margin: 0;">Porra de ${part.user}</h3>
+             <div style="display: flex; gap: 15px; align-items: center;">
+               ${part.scorer ? `<div style="background: rgba(255,159,67,0.15); border: 1px solid rgba(255,159,67,0.3); padding: 4px 10px; border-radius: 8px; color: #ff9f43; font-weight: bold; font-size: 0.9em;">⚽ Pichichi: ${part.scorer}</div>` : ''}
+               <div style="background: rgba(0,210,211,0.15); border: 1px solid rgba(0,210,211,0.3); padding: 4px 10px; border-radius: 8px; color: var(--accent-color); font-weight: bold; font-size: 1.1em;">🏆 Total: ${points.total} pts</div>
+             </div>
+           </div>`;
+
+  // CONTENEDOR FLEX PRINCIPAL (2 Columnas)
+  html += `<div style="display: flex; flex-wrap: wrap; gap: 20px;">`;
+  
+  // COLUMNA IZQUIERDA
+  html += `<div style="flex: 2; min-width: 250px; max-height: 85vh; overflow-y: auto; padding-right: 10px;">`;
   
   if (part.groups) {
-    html += `<strong style="color:#00d2d3; display:block; margin-bottom: 10px; font-size: 1.3em;">Fase de Grupos:</strong>`;
-    html += `<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 25px;">`;
+    const getOfficialPositionAndMp = (groupName, teamName) => {
+        if (!window.officialPoints || !window.officialPoints[groupName] || !window.groupOdds) return {pos: -1, mp: 0};
+        const teams = window.groupOdds[groupName].map(t => {
+            const safeKey = t.name.replace(/[.#$\[\]]/g, "");
+            const officialData = window.officialPoints[groupName][safeKey];
+            const pts = (typeof officialData === 'object' && officialData !== null) ? (officialData.pts || 0) : (officialData || 0);
+            const diff = officialData?.diff || 0;
+            const gls = officialData?.gls || 0;
+            const mp = officialData?.mp || 0;
+            return { name: t.name, pts, diff, gls, mp };
+        });
+        teams.sort((a,b) => {
+            if(b.pts !== a.pts) return b.pts - a.pts;
+            if(b.diff !== a.diff) return b.diff - a.diff;
+            return b.gls - a.gls;
+        });
+        const pos = teams.findIndex(t => t.name === teamName) + 1;
+        const mp = teams.find(t => t.name === teamName)?.mp || 0;
+        return {pos, mp};
+    };
+
+    const getColorHtml = (groupName, teamName, expectedPos, defaultColor, medal) => {
+        let color = defaultColor;
+        const {pos, mp} = getOfficialPositionAndMp(groupName, teamName);
+        if (mp > 0) {
+            if (pos === expectedPos) {
+                color = "#2ecc71"; // Verde
+            } else if (pos <= 3) {
+                color = "#3498db"; // Azul
+            } else {
+                color = "#e74c3c"; // Rojo
+            }
+        }
+        
+        let extraStyle = "";
+        // Sombreado especial para los Mejores Terceros elegidos por el usuario
+        if (expectedPos === 3 && part.thirds && part.thirds.includes(teamName)) {
+            extraStyle = "background: rgba(0, 210, 211, 0.15); border: 1px solid rgba(0, 210, 211, 0.3); border-radius: 4px; padding: 2px 4px; margin-left: -4px;";
+        }
+        
+        return `<div style="font-size: 1em; color: ${color}; margin-bottom: 4px; ${extraStyle}">${medal} ${f(teamName)}</div>`;
+    };
+
+    html += `<details id="details-groups" open style="margin-bottom: 10px; max-width: 900px;" ontoggle="if(this.open){ document.getElementById('details-knockout').removeAttribute('open'); const ptsDetails = document.getElementById('details-points'); if(ptsDetails && !ptsDetails.open) ptsDetails.open = true; window.renderPointsLog('groups'); }"><summary style="color:#00d2d3; font-size: 1.2em; cursor: pointer; font-weight: bold; padding: 5px 0; user-select: none;">Fase de Grupos</summary>`;
+    html += `<div class="modal-groups-grid">`;
     Object.keys(part.groups).forEach(g => {
         html += `<div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; text-align: left;">`;
         html += `<div style="font-weight: bold; color: var(--accent-color); margin-bottom: 8px; font-size: 1.1em; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Grupo ${g}</div>`;
-        html += `<div style="font-size: 1em; color: white; margin-bottom: 4px;">🥇 ${f(part.groups[g][0])}</div>`;
-        html += `<div style="font-size: 1em; color: #ddd; margin-bottom: 4px;">🥈 ${f(part.groups[g][1])}</div>`;
-        html += `<div style="font-size: 1em; color: #bbb;">🥉 ${f(part.groups[g][2])}</div>`;
+        html += getColorHtml(g, part.groups[g][0], 1, "white", "🥇");
+        html += getColorHtml(g, part.groups[g][1], 2, "#ddd", "🥈");
+        html += getColorHtml(g, part.groups[g][2], 3, "#bbb", "🥉");
         html += `</div>`;
     });
-    html += `</div>`;
+    html += `</div></details>`;
   }
+
+  const getFlat = (arr) => arr ? arr.flat().filter(Boolean) : [];
+  const winR16 = getFlat(part.r16);
+  const winQF = getFlat(part.qf);
+  const winSF = getFlat(part.sf);
+  const winFinal = part.final ? part.final : [];
   
-  if (part.thirds && part.thirds.length > 0) {
-      html += `<strong style="color:#00d2d3; display:block; margin-top: 15px; margin-bottom: 10px; font-size: 1.1em;">Mejores Terceros:</strong>`;
-      html += `<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px;">`;
-      part.thirds.forEach(t => {
-          html += `<span style="background: rgba(0, 210, 211, 0.15); border: 1px solid rgba(0, 210, 211, 0.3); color: #00d2d3; padding: 4px 10px; border-radius: 12px; font-size: 0.85em;">${f(t)}</span>`;
-      });
+  const createROTeamSlot = (teamName, winnersList) => {
+      if(!teamName) return `<div class="team-slot empty" style="pointer-events:none; font-size: 0.8rem; height: 32px; padding: 5px; justify-content: center;">Por definir</div>`;
+      const isWinner = winnersList.includes(teamName);
+      const extraClass = isWinner ? " winner" : "";
+      return `<div class="team-slot${extraClass}" style="pointer-events:none; font-size: 0.8rem; height: 32px; padding: 5px 8px; display: flex; justify-content: space-between;"><span>${f(teamName)}</span> <span>${isWinner?'✅':''}</span></div>`;
+  };
+
+  const createROMatch = (matchArr, winnersList) => {
+      const t1 = matchArr && matchArr.length > 0 ? matchArr[0] : null;
+      const t2 = matchArr && matchArr.length > 1 ? matchArr[1] : null;
+      return `<div class="match" style="margin-bottom: 12px;">
+                ${createROTeamSlot(t1, winnersList)}
+                ${createROTeamSlot(t2, winnersList)}
+              </div>`;
+  };
+
+  const renderRORound = (title, matchesArray, winnersList, extraClass) => {
+      let isHidden = extraClass === 'ro-sf';
+      let html = `<div class="round ${extraClass}" style="min-width: 140px; margin: 0 10px; ${isHidden ? 'display: none;' : ''}">
+                    <h2 style="font-size: 0.75rem; text-align: center; color: var(--text-muted); margin-bottom: 10px;">${title}</h2>`;
+      if(matchesArray) {
+          matchesArray.forEach(m => {
+              html += createROMatch(m, winnersList);
+          });
+      }
       html += `</div>`;
+      return html;
+  };
+
+  // Eliminatorias Section (Collapsible)
+  html += `<details id="details-knockout" style="margin-bottom: 20px;" ontoggle="if(this.open){ document.getElementById('details-groups').removeAttribute('open'); const ptsDetails = document.getElementById('details-points'); if(ptsDetails && ptsDetails.open) ptsDetails.open = false; window.renderPointsLog('knockout'); }">
+             <summary style="color:#00d2d3; font-size: 1.2em; cursor: pointer; font-weight: bold; padding: 5px 0; user-select: none; margin-bottom: 10px;">Eliminatorias</summary>`;
+
+  // Toggle Buttons
+  html += `<div style="display:flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; justify-content: center; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+             <strong style="color:var(--text-muted); font-size:0.9em; display:flex; align-items:center;">Ocultar/Mostrar:</strong>
+             <button class="glass-btn" style="padding: 4px 10px; font-size: 0.8rem; transition: all 0.2s ease;" onclick="toggleRoundVisibility(this, 'ro-r32')">👁️ 1/16</button>
+             <button class="glass-btn" style="padding: 4px 10px; font-size: 0.8rem; transition: all 0.2s ease;" onclick="toggleRoundVisibility(this, 'ro-r16')">👁️ Octavos</button>
+             <button class="glass-btn" style="padding: 4px 10px; font-size: 0.8rem; transition: all 0.2s ease;" onclick="toggleRoundVisibility(this, 'ro-qf')">👁️ Cuartos</button>
+             <button class="glass-btn" style="padding: 4px 10px; font-size: 0.8rem; transition: all 0.2s ease; opacity: 0.5; filter: grayscale(100%); transform: scale(0.95);" onclick="toggleRoundVisibility(this, 'ro-sf')">👁️ Semis</button>
+             <button class="glass-btn" style="padding: 4px 10px; font-size: 0.8rem; transition: all 0.2s ease; opacity: 0.5; filter: grayscale(100%); transform: scale(0.95);" onclick="toggleRoundVisibility(this, 'ro-center')">👁️ Finales</button>
+           </div>`;
+
+  // Bracket Container
+  html += `<div style="overflow-x: auto; padding-bottom: 20px; border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; background: rgba(0,0,0,0.15);">
+             <div class="bracket-wrapper" style="display: flex; justify-content: center; min-width: max-content; padding: 15px;">`;
+
+  // Left Side
+  html += `<section class="bracket-side left-side" style="display: flex; gap: 10px;">`;
+  html += renderRORound("Dieciseisavos", part.r32 ? part.r32.slice(0,8) : [], winR16, "ro-r32");
+  html += renderRORound("Octavos", part.r16 ? part.r16.slice(0,4) : [], winQF, "ro-r16");
+  html += renderRORound("Cuartos", part.qf ? part.qf.slice(0,2) : [], winSF, "ro-qf");
+  html += renderRORound("Semifinales", part.sf ? part.sf.slice(0,1) : [], winFinal, "ro-sf");
+  html += `</section>`;
+
+  // Center (Final, Champion, Third)
+  html += `<section class="center-side ro-center" style="display: none; flex-direction: column; align-items: center; justify-content: center; min-width: 160px; gap: 20px; padding: 0 10px;">
+             <div class="finals-container" style="width: 100%;">
+                 <div class="match final-match" style="margin-bottom: 15px;">
+                     <h3 style="text-align: center; font-size: 0.8rem; color: #fbbf24; margin-bottom: 5px;">🏆 FINAL 🏆</h3>
+                     ${createROTeamSlot(part.final ? part.final[0] : null, part.champion ? [part.champion] : [])}
+                     ${createROTeamSlot(part.final ? part.final[1] : null, part.champion ? [part.champion] : [])}
+                 </div>
+                 <div class="match champion-display" style="text-align: center;">
+                     <h3 style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px;">CAMPEÓN</h3>
+                     <div class="team-slot winner" style="height: 50px; font-size: 1.1rem; font-weight: bold; justify-content: center; pointer-events: none; border-color: #fbbf24; background: rgba(251, 191, 36, 0.15); color: #fbbf24;">${part.champion ? f(part.champion) : '???'}</div>
+                 </div>`;
+  if (part.thirdPlaceMatch && part.thirdPlaceMatch.length > 0) {
+      html += `<div class="match third-place" style="margin-top: 15px;">
+                  <h3 style="text-align: center; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px;">3º PUESTO</h3>
+                  ${createROTeamSlot(part.thirdPlaceMatch[0], part.thirdPlaceWinner ? [part.thirdPlaceWinner] : [])}
+                  ${createROTeamSlot(part.thirdPlaceMatch[1], part.thirdPlaceWinner ? [part.thirdPlaceWinner] : [])}
+               </div>`;
   }
-  
-  if (part.champion) {
-      html += `<strong style="color:#fbbf24; display:block; margin-top: 15px; font-size: 1.1em;">Campeón:</strong><div style="margin-left: 10px; margin-bottom: 10px; color: #fbbf24; font-weight: bold;">🏆 ${f(part.champion)}</div>`;
-  }
-  if (part.scorer) {
-      html += `<strong style="color:#ff9f43; display:block; margin-top: 15px; font-size: 1.1em;">Pichichi:</strong><div style="margin-left: 10px; margin-bottom: 10px; color: #ff9f43;">⚽ ${part.scorer}</div>`;
-  }
-  
-  html += `</div></div>`; // Fin Columna Izquierda
+  html += `</div></section>`;
+
+  // Right Side
+  html += `<section class="bracket-side right-side" style="display: flex; gap: 10px;">`;
+  html += renderRORound("Semifinales", part.sf ? part.sf.slice(1,2) : [], winFinal, "ro-sf");
+  html += renderRORound("Cuartos", part.qf ? part.qf.slice(2,4) : [], winSF, "ro-qf");
+  html += renderRORound("Octavos", part.r16 ? part.r16.slice(4,8) : [], winQF, "ro-r16");
+  html += renderRORound("Dieciseisavos", part.r32 ? part.r32.slice(8,16) : [], winR16, "ro-r32");
+  html += `</section>`;
+
+  html += `</div></div>`; // End Bracket Container
+  html += `</details>`; // End Eliminatorias Section
+
+  html += `</div>`; // Fin Columna Izquierda
   
   // COLUMNA DERECHA: Puntos
-  html += `<div style="flex: 1; min-width: 250px;">`;
-  html += `<h3 style="color: var(--accent-color); margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Desglose de Puntos</h3>`;
-  
-  if (points.log && points.log.length > 0) {
-    html += `<ul style="list-style-type: none; padding-left: 0; margin-bottom: 20px; max-height: 80vh; overflow-y: auto; padding-right: 5px;">`;
-    points.log.forEach(item => {
-      html += `<li style="background: rgba(255, 255, 255, 0.05); padding: 8px 12px; margin-bottom: 5px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-size: 0.9em; color: var(--text-color);">${item.msg}</span>
-        <span style="color: var(--primary-color); font-weight: bold; background: rgba(0, 210, 211, 0.2); padding: 2px 6px; border-radius: 4px;">+${item.amount}</span>
-      </li>`;
-    });
-    html += `</ul>`;
-    html += `<div style="text-align: right; font-size: 1.2em; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
-      <strong>Total: <span style="color: var(--accent-color);">${points.total} pts</span></strong>
-    </div>`;
-  } else {
-    html += `<p style="text-align: center; color: var(--text-muted); padding: 20px 0;">Todavía no hay puntos asignados.</p>`;
-  }
-  html += `</div>`; // Fin Columna Derecha
+  html += `<div id="points-col-wrapper" style="flex: 1; min-width: 250px; transition: all 0.3s ease; max-height: 85vh; overflow-y: auto;">
+             <details id="details-points" open ontoggle="const wrap = document.getElementById('points-col-wrapper'); wrap.style.flex = this.open ? '1' : '0 0 auto'; wrap.style.minWidth = this.open ? '250px' : 'auto'; this.querySelector('summary').style.borderBottom = this.open ? '1px solid rgba(255,255,255,0.1)' : 'none';" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; box-sizing: border-box; overflow: hidden;">
+               <summary style="color: var(--accent-color); font-size: 1.1em; font-weight: bold; cursor: pointer; user-select: none; padding-bottom: 5px; white-space: nowrap;">Desglose de Puntos</summary>
+               <div id="points-log-container" style="margin-top: 15px;"></div>
+             </details>
+           </div>`; // Fin Columna Derecha
   
   html += `</div>`; // Fin Layout Flex
   
   modalBody.innerHTML = html;
+  window.renderPointsLog('groups'); // Initial render for groups phase
   modal.style.display = "flex";
 };
 
@@ -2506,7 +2727,7 @@ setInterval(() => {
 // ----------------------------------------------------
 // WHAT'S NEW MODAL (CLASIFICACION LIVE)
 // ----------------------------------------------------
-const updateKey = 'update_seen_v3';
+const updateKey = 'update_seen_v4';
 if (!localStorage.getItem(updateKey)) {
   // Give a tiny delay to ensure HTML is fully parsed if async
   setTimeout(() => {

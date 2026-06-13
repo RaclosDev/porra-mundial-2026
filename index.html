@@ -16,7 +16,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@400;700;900&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=1.0.5">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 
@@ -198,7 +198,7 @@
         <section id="view-group-stage" class="view-section">
             <div id="read-only-banner"
                 style="display: none; background: rgba(59, 130, 246, 0.2); border: 1px solid var(--accent-color); padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-weight: bold; color: var(--accent-color);">
-                <div>Estás viendo la apuesta de: <span id="read-only-name" style="color: white;"></span></div>
+                <div>Estás viendo la porra de: <span id="read-only-name" style="color: white;"></span></div>
                 <div style="margin-top: 5px; color: #ffd32a;">Máximo Goleador: <span id="read-only-scorer-name"
                         style="color: white;"></span></div>
                 <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center;">
@@ -242,7 +242,7 @@
         <section id="view-thirds" class="view-section">
             <div id="thirds-read-only-banner"
                 style="display: none; background: rgba(59, 130, 246, 0.2); border: 1px solid var(--accent-color); padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-weight: bold; color: var(--accent-color);">
-                <div>Estás viendo la apuesta de: <span id="thirds-read-only-name" style="color: white;"></span></div>
+                <div>Estás viendo la porra de: <span id="thirds-read-only-name" style="color: white;"></span></div>
                 <div style="margin-top: 5px; color: #ffd32a;">Máximo Goleador: <span id="thirds-read-only-scorer-name"
                         style="color: white;"></span></div>
                 <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center;">
@@ -282,7 +282,7 @@
         <section id="view-bracket" class="view-section">
             <div id="bracket-read-only-banner"
                 style="display: none; background: rgba(59, 130, 246, 0.2); border: 1px solid var(--accent-color); padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-weight: bold; color: var(--accent-color);">
-                <div>Estás viendo la apuesta de: <span id="bracket-read-only-name" style="color: white;"></span></div>
+                <div>Estás viendo la porra de: <span id="bracket-read-only-name" style="color: white;"></span></div>
                 <div style="margin-top: 5px; color: #ffd32a;">Máximo Goleador: <span id="bracket-read-only-scorer-name"
                         style="color: white;"></span></div>
                 <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center;">
@@ -638,6 +638,15 @@
                 </div>
             </div>
 
+            <div
+                style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-bottom: 25px; display: flex; gap: 15px; align-items: flex-start; border: 1px solid rgba(255,255,255,0.1);">
+                <div style="font-size: 2rem; line-height: 1;">✨</div>
+                <div>
+                    <h3 style="color: #a29bfe; margin: 0 0 5px 0;">Diseño de Porras Mejorado</h3>
+                    <p style="font-size: 0.95rem; margin: 0; color: #ccc;">Al consultar el desglose de cualquier apuesta, disfrutarás de una vista a pantalla completa con las eliminatorias y la fase de grupos claramente separadas y mucho más fáciles de leer.</p>
+                </div>
+            </div>
+
             <div class="action-buttons">
                 <button id="btn-close-whats-new" class="glass-btn primary-btn"
                     style="width: 100%; font-size: 1.1rem; padding: 12px; font-weight: bold;">¡Entendido! ⚽</button>
@@ -724,7 +733,7 @@
     <script src="data.js"></script>
     <script src="simulator.js"></script>
     <script src="annex_c_matrix.js"></script>
-    <script type="module" src="main.js"></script>
+    <script type="module" src="main.js?v=1.0.6"></script>
 </body>
 
 </html>
