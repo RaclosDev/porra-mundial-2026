@@ -1,6 +1,6 @@
 // main.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, set, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, set, push, onValue, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -16,6 +16,28 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
+
+// Sistema de presencia (Contador online)
+const connectedRef = ref(database, '.info/connected');
+const onlineUsersRef = ref(database, 'onlineUsers');
+
+onValue(connectedRef, (snap) => {
+  if (snap.val() === true) {
+    const myConnectionsRef = push(onlineUsersRef);
+    onDisconnect(myConnectionsRef).remove();
+    set(myConnectionsRef, true);
+  }
+});
+
+onValue(onlineUsersRef, (snap) => {
+  const onlineCount = snap.exists() ? Object.keys(snap.val()).length : 0;
+  const counterEl = document.getElementById('online-counter');
+  if (counterEl) {
+    // Si es 1, no ponemos plural
+    counterEl.innerText = `👁️ ${onlineCount} ${onlineCount === 1 ? 'online' : 'online'}`;
+    counterEl.style.display = onlineCount > 0 ? 'inline-block' : 'none';
+  }
+});
 
 // State for Leaderboard
 window.participantsHashes = [];
