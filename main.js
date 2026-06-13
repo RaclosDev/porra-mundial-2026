@@ -2261,7 +2261,7 @@ async function syncWithApi(silent = false) {
     const upcomingMatches = [];
     const liveMatches = [];
     window.lastKnownScores = window.lastKnownScores || {};
-    let goalScored = false;
+    window.lastKnownScores = window.lastKnownScores || {};
     
     // Diferencia de horas desde la hora local del estadio a la hora de España (CEST / UTC+2)
     const stadiumOffsetsToSpain = { "14": 9, "8": 6, "13": 9, "15": 9, "3": 8, "1": 8, "2": 8, "5": 7, "16": 9, "7": 6, "9": 6, "6": 7, "10": 6, "4": 7, "11": 6, "12": 6 };
@@ -2326,15 +2326,13 @@ async function syncWithApi(silent = false) {
 
         const previousScore = window.lastKnownScores[game.id];
         if (previousScore !== undefined && isLive && !isStartingSoon) {
-            if (homeScore > previousScore.home || awayScore > previousScore.away) {
-                goalScored = true;
-            }
+            // goal detection removed
         }
         if (isLiveOrFinished) {
             window.lastKnownScores[game.id] = { home: homeScore, away: awayScore };
         }
 
-        if (!isNaN(homeScore) && !isNaN(awayScore) && homeId && awayId && game.finished === "TRUE") {
+        if (!isNaN(homeScore) && !isNaN(awayScore) && homeId && awayId && (game.finished === "TRUE" || (isLive && !isStartingSoon))) {
           // Add to points
           if (!teamCalculatedPts[homeId]) teamCalculatedPts[homeId] = {pts: 0, diff: 0, gls: 0, mp: 0};
           if (!teamCalculatedPts[awayId]) teamCalculatedPts[awayId] = {pts: 0, diff: 0, gls: 0, mp: 0};
@@ -2378,46 +2376,7 @@ async function syncWithApi(silent = false) {
     
     const newPoints = {};
     
-    // Fake goal injection for testing
-    if (window.fakeGoalTriggered) {
-        goalScored = true;
-        window.fakeGoalTriggered = false;
-    }
-
-    // Goal animation trigger
-    if (goalScored) {
-        if (window.confetti) {
-            const duration = 35 * 1000;
-            const animationEnd = Date.now() + duration;
-            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999999 };
-
-            function randomInRange(min, max) {
-              return Math.random() * (max - min) + min;
-            }
-
-            const interval = setInterval(function() {
-              const timeLeft = animationEnd - Date.now();
-
-              if (timeLeft <= 0) {
-                return clearInterval(interval);
-              }
-
-              const particleCount = 50 * (timeLeft / duration);
-              window.confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
-              window.confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
-            }, 250);
-        }
-        try {
-            const audio = new Audio("goal_sound.webm");
-            audio.volume = 0.5;
-            audio.play();
-            setTimeout(() => {
-                audio.pause();
-                audio.currentTime = 0;
-            }, 25000);
-        } catch(e) {}
-    }
-
+    
     // Convert current groups array format for fast lookup
     const localTeamGroupMap = {};
     Object.keys(window.groupOdds).forEach(g => {

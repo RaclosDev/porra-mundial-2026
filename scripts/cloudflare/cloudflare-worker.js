@@ -66,6 +66,15 @@ async function handleRequest(request) {
       a.setAttribute('target', '_self');
       a.removeAttribute('rel');
     });
+    (root || document).querySelectorAll('iframe').forEach(function(ifr) {
+      ifr.setAttribute('allowfullscreen', 'true');
+      ifr.setAttribute('webkitallowfullscreen', 'true');
+      ifr.setAttribute('mozallowfullscreen', 'true');
+      var allow = ifr.getAttribute('allow') || '';
+      if (!allow.includes('fullscreen')) {
+        ifr.setAttribute('allow', allow ? allow + '; fullscreen' : 'fullscreen');
+      }
+    });
   }
 
   // Observer que vigila cambios en el DOM
@@ -79,7 +88,16 @@ async function handleRequest(request) {
               node.setAttribute('target', '_self');
             }
           }
-          // Si contiene enlaces dentro
+          if (node.tagName === 'IFRAME') {
+            node.setAttribute('allowfullscreen', 'true');
+            node.setAttribute('webkitallowfullscreen', 'true');
+            node.setAttribute('mozallowfullscreen', 'true');
+            var allow = node.getAttribute('allow') || '';
+            if (!allow.includes('fullscreen')) {
+              node.setAttribute('allow', allow ? allow + '; fullscreen' : 'fullscreen');
+            }
+          }
+          // Si contiene enlaces o iframes dentro
           patchLinks(node);
         }
       });
@@ -142,6 +160,9 @@ async function handleRequest(request) {
     const newHeaders = new Headers(response.headers);
     newHeaders.delete("X-Frame-Options");
     newHeaders.delete("Content-Security-Policy");
+    newHeaders.delete("Permissions-Policy");
+    newHeaders.delete("Feature-Policy");
+    newHeaders.set("Permissions-Policy", "fullscreen=*");
     newHeaders.set("Content-Type", "text/html; charset=utf-8");
     newHeaders.set("Access-Control-Allow-Origin", "*");
 
@@ -155,6 +176,8 @@ async function handleRequest(request) {
   const newHeaders = new Headers(response.headers);
   newHeaders.delete("X-Frame-Options");
   newHeaders.delete("Content-Security-Policy");
+  newHeaders.delete("Permissions-Policy");
+  newHeaders.delete("Feature-Policy");
   newHeaders.set("Access-Control-Allow-Origin", "*");
 
   return new Response(response.body, {
