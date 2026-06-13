@@ -54,14 +54,17 @@ onValue(onlineUsersRef, (snap) => {
   const counterEl = document.getElementById('online-counter');
   
   if (counterEl) {
+    // Deduplicate names (same user in multiple tabs)
+    const names = [...new Set(Object.values(data))];
+    const uniqueCount = names.length;
+
     const textEl = document.getElementById('online-counter-text');
     if (textEl) {
-        textEl.innerText = `👁️ ${onlineCount} ${onlineCount === 1 ? 'online' : 'online'}`;
+        textEl.innerText = `👁️ ${uniqueCount} online`;
     }
-    counterEl.style.display = onlineCount > 0 ? 'inline-block' : 'none';
+    counterEl.style.display = uniqueCount > 0 ? 'inline-block' : 'none';
     
     // Rellenar la lista HTML del nuevo tooltip bonito
-    const names = Object.values(data);
     const listEl = document.getElementById('online-users-list');
     if (listEl) {
         listEl.innerHTML = names.map(n => `<li>${n}</li>`).join("");
