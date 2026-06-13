@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="data.js"></script>
+  <script src="annex_c_matrix.js"></script>
+  <script src="simulator.js"></script>
+  <script>
+    window.onload = () => {
+      let manualGroups = {};
+      Object.keys(groupOdds).forEach(g => {
+        const teams = groupOdds[g];
+        manualGroups[g] = {
+          first: { ...teams[0], group: g },
+          second: { ...teams[1], group: g },
+          third: { ...teams[2], group: g }
+        };
+      });
+
+      let manualThirds = [
+        manualGroups['A'].third,
+        manualGroups['B'].third,
+        manualGroups['C'].third,
+        manualGroups['D'].third,
+        manualGroups['E'].third,
+        manualGroups['F'].third,
+        manualGroups['G'].third,
+        manualGroups['H'].third
+      ];
+
+      try {
+        console.log("Generating...");
+        const r32 = generateR32FromManual(manualGroups, manualThirds);
+        console.log("R32 generated", r32);
+        
+        let bs = { r32: r32, r16: {left:[], right:[]}, qf: {left:[], right:[]}, sf: {left:[], right:[]} };
+        console.log("BS initialized");
+      } catch(e) {
+        console.error(e);
+      }
+    };
+  </script>
+</head>
+<body>
+  <h1>Test</h1>
+</body>
+</html>
