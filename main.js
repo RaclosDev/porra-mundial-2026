@@ -938,7 +938,6 @@ window.setPlayerSource = function(source) {
         if (!iframeRtve.src.includes('rtve.es')) {
             iframeRtve.src = "https://secure-embed.rtve.es/drmn/embed/video/1688877/";
         }
-        if(iframeFctv) iframeFctv.src = "";
     } else if (source === 'acestream') {
         if(btnAce) { btnAce.style.background = '#ff4757'; btnAce.style.border = 'none'; }
         
@@ -947,7 +946,6 @@ window.setPlayerSource = function(source) {
         containerAce.style.display = 'block';
         
         iframeRtve.src = ""; // Stop audio
-        if(iframeFctv) iframeFctv.src = "";
     } else if (source === 'fctv') {
         if(btnFctv) { btnFctv.style.background = '#ff4757'; btnFctv.style.border = 'none'; }
         
@@ -956,11 +954,45 @@ window.setPlayerSource = function(source) {
         if(containerFctv) containerFctv.style.display = 'block';
         
         iframeRtve.src = ""; // Stop audio
-        if (iframeFctv && !iframeFctv.src.includes('workers.dev')) {
-            iframeFctv.src = "https://wandering-tooth-4aab.cst-pod.workers.dev/es";
+        
+        // Buscar el partido en directo
+        const liveMatches = (window.matchRadar && window.matchRadar.live) ? window.matchRadar.live : [];
+        let fctvUrl = null;
+        
+        for (const m of liveMatches) {
+            const key = _normalizeFctv(m.home) + ' vs ' + _normalizeFctv(m.away);
+            if (window.fctvMatchUrls[key]) {
+                fctvUrl = window.fctvMatchUrls[key];
+                break;
+            }
+            // Probar invertido
+            const keyRev = _normalizeFctv(m.away) + ' vs ' + _normalizeFctv(m.home);
+            if (window.fctvMatchUrls[keyRev]) {
+                fctvUrl = window.fctvMatchUrls[keyRev];
+                break;
+            }
+        }
+        
+        if (fctvUrl) {
+            // Transformar la URL estática al formato del reproductor directo (live)
+            // Original: https://fctv33hd.yachts/es/football/fifa-world-cup-match-4318059/usa-vs-paraguay-06-2026.html
+            // Destino:  https://jack07eo.mpstickv5m73jgravity.my/es/football/fifa-world-cup-4318059/usa-vs-paraguay.html?icg=RVM&ilang=es
+            let liveUrl = fctvUrl.replace('https://fctv33hd.yachts/es/football/fifa-world-cup-match-', 'https://jack07eo.mpstickv5m73jgravity.my/es/football/fifa-world-cup-');
+            liveUrl = liveUrl.replace('-06-2026.html', '.html?icg=RVM&ilang=es');
+            
+            iframeFctv.src = liveUrl;
+        } else if (liveMatches.length === 0) {
+            alert('No hay ningún partido en directo ahora mismo.');
+            iframeFctv.src = "";
+        } else {
+            // Fallback (poco probable que pase)
+            iframeFctv.src = 'https://jack07eo.mpstickv5m73jgravity.my/es/football';
         }
     }
 };
+
+// El mapa fctvMatchUrls y la funcion _normalizeFctv se han movido a fctv-links.js
+
 
 function renderLastMatches() {
   const renderMatches = (matches, containerId, matchType) => {
