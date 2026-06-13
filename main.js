@@ -175,6 +175,7 @@ onValue(ref(database, 'official'), (snapshot) => {
 onValue(ref(database, 'officialPoints'), (snapshot) => {
   window.officialPoints = snapshot.val() || {};
   if(typeof renderHomeStandings === "function") renderHomeStandings();
+  if(typeof renderLeaderboard === "function") renderLeaderboard();
 });
 
 onValue(ref(database, 'matchRadar'), (snapshot) => {
@@ -1439,6 +1440,7 @@ onValue(ref(database, 'manualTiebreakers'), (snapshot) => {
     if (snapshot.exists()) {
         window.manualTiebreakers = snapshot.val();
         renderHomeStandings();
+        if(typeof renderLeaderboard === "function") renderLeaderboard();
     }
 });
 
