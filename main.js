@@ -770,12 +770,7 @@ let _activeGroupPanel = null; // track which group is open
 
 function closeGroupPanel() {
   const panel = document.getElementById('group-matches-panel');
-  const grid = document.getElementById('home-standings-grid');
   if (panel) panel.style.display = 'none';
-  // Restore grid columns to normal
-  if (grid) {
-    grid.style.gridTemplateColumns = '';
-  }
   document.querySelectorAll('.group-card').forEach(c => {
     c.style.borderColor = '';
     c.style.boxShadow = '';
@@ -804,11 +799,6 @@ function showGroupMatchesPanel(groupName, teams) {
 
   title.textContent = `Grupo ${groupName} — Partidos`;
   list.innerHTML = '';
-
-  // Shrink the groups grid to 3 columns to make room
-  if (grid) {
-    grid.style.gridTemplateColumns = 'repeat(3, 1fr)';
-  }
 
   // Highlight selected card, deselect others
   document.querySelectorAll('.group-card').forEach(c => {
