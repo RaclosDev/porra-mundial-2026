@@ -225,6 +225,9 @@ onValue(ref(database, 'bets'), (snapshot) => {
   if (typeof renderLeaderboard === "function") renderLeaderboard();
   if (typeof renderStats === "function") renderStats();
   if (typeof window.populateMyBetDropdown === "function") window.populateMyBetDropdown();
+  // Show the header Ver Mi Porra button once we have data
+  const headerBtn = document.getElementById('btn-view-my-bet-header');
+  if (headerBtn && window.participantsHashes.length > 0) headerBtn.style.display = 'inline-block';
 });
 
 window.deleteBet = function (key) {

@@ -17,7 +17,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@400;700;900&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=1.3.58">
+    <link rel="stylesheet" href="style.css?v=1.3.59">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
 </head>
@@ -36,6 +36,7 @@
                         <ul id="online-users-list"></ul>
                     </div>
                 </div>
+                <button id="btn-view-my-bet-header" onclick="document.getElementById('btn-view-my-bet') && document.getElementById('btn-view-my-bet').click()" style="display: none; background: linear-gradient(135deg, #f368e0, #ff9ff3); border: none; color: black; padding: 5px 14px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; cursor: pointer; white-space: nowrap;">👀 Ver Mi Porra</button>
             </div>
             <div class="user-info" id="user-info-bar" style="display: none;">
                 <input type="text" id="user-name" placeholder="Tu Nombre">
@@ -114,6 +115,13 @@
 
         <!-- HOME VIEW (STANDINGS) -->
         <section id="view-home" class="view-section active">
+
+            <!-- Clasificación Fase de Grupos - TÍTULO ARRIBA -->
+            <div class="section-header" style="margin-bottom: 15px; text-align: center;">
+                <h2 style="font-size: 1.8rem; border-bottom: 2px solid var(--accent-color); display: inline-block; padding-bottom: 5px;">Clasificación Fase de Grupos</h2>
+            </div>
+
+            <!-- Partidos en Curso -->
             <div id="live-matches-wrapper-home"
                 style="display: none; max-width: 500px; margin: 0 auto 20px auto; text-align: center;">
                 <h3
@@ -151,7 +159,6 @@
                 <div class="section-header center-header glass-header"
                     style="z-index: 5; position: relative; padding: 15px 30px; border-radius: 15px; background: rgba(30, 39, 46, 0.4); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.05); margin: 0 10px;">
                     <h2>Clasificación Fase de Grupos</h2>
-                    <p>Puntuación actual de cada selección.</p>
                     <div style="display: flex; gap: 10px; justify-content: center; margin-top: 15px; flex-wrap: wrap;">
                         <button id="btn-view-my-bet" class="glass-btn primary-btn"
                             style="padding: 10px 20px; font-weight: bold; background: linear-gradient(135deg, #f368e0, #ff9ff3); color: black;">👀
@@ -813,7 +820,7 @@
     <script src="data.js"></script>
     <script src="simulator.js"></script>
     <script src="annex_c_matrix.js"></script>
-    <script type="module" src="main.js?v=1.3.58"></script>
+    <script type="module" src="main.js?v=1.3.59"></script>
 </body>
 
 </html>
