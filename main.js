@@ -2875,9 +2875,7 @@ document.getElementById('btn-share-wa')?.addEventListener('click', async () => {
 
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
-          files: [file],
-          title: 'Porra Mundial 2026',
-          text: '¡Así va la clasificación de la Porra!'
+          files: [file]
         });
       } else {
         // Fallback: Trigger download if native sharing is not supported
