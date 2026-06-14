@@ -17,7 +17,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@400;700;900&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=1.3.53">
+    <link rel="stylesheet" href="style.css?v=1.3.54">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
 </head>
@@ -211,8 +211,14 @@
                 </div>
             </div>
 
-            <div id="home-standings-grid" class="groups-grid">
-                <!-- Javascript will populate 12 groups with points here -->
+            <div style="display: flex; gap: 20px; align-items: flex-start;">
+                <div id="home-standings-grid" class="groups-grid" style="flex: 1; min-width: 0;">
+                    <!-- Javascript will populate 12 groups with points here -->
+                </div>
+                <div id="group-matches-panel" style="display: none; width: 320px; flex-shrink: 0; background: rgba(0,0,0,0.25); border-radius: 12px; padding: 20px; border: 1px solid rgba(255,255,255,0.1); max-height: 600px; overflow-y: auto;">
+                    <h3 id="group-matches-title" style="text-align: center; color: var(--accent-color); margin-bottom: 15px;"></h3>
+                    <div id="group-matches-list" class="last-matches-grid"></div>
+                </div>
             </div>
 
             <div class="section-header" style="margin-top: 40px; margin-bottom: 20px;">
@@ -804,7 +810,7 @@
     <script src="data.js"></script>
     <script src="simulator.js"></script>
     <script src="annex_c_matrix.js"></script>
-    <script type="module" src="main.js?v=1.3.53"></script>
+    <script type="module" src="main.js?v=1.3.54"></script>
 </body>
 
 </html>

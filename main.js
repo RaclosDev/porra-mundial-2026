@@ -766,39 +766,84 @@ window.exitReadOnlyMode = function () {
 // ----------------------------------------------------
 // GROUP STAGE SELECT VIEW
 // ----------------------------------------------------
-function getGroupMatchesHTML(groupName, teams) {
-  let html = '';
+function showGroupMatchesPanel(groupName, teams) {
+  const panel = document.getElementById('group-matches-panel');
+  const title = document.getElementById('group-matches-title');
+  const list = document.getElementById('group-matches-list');
+  if (!panel || !title || !list) return;
+
+  title.textContent = `Grupo ${groupName} — Partidos`;
+  list.innerHTML = '';
+
+  // Highlight selected card, deselect others
+  document.querySelectorAll('.group-card').forEach(c => {
+    c.style.borderColor = '';
+    c.style.boxShadow = '';
+  });
+  const selected = document.getElementById(`group-card-${groupName}`);
+  if (selected) {
+    selected.style.borderColor = 'var(--accent-color)';
+    selected.style.boxShadow = '0 0 12px var(--accent-glow)';
+  }
+
   if (window.allGames && window.nameToIdMap) {
     const groupIds = teams.map(t => window.nameToIdMap[t.name]);
-    const groupMatches = window.allGames.filter(g => groupIds.includes(g.home_team_id) && groupIds.includes(g.away_team_id));
-    
-    if (groupMatches.length > 0) {
-      groupMatches.sort((a, b) => new Date(a.local_date) - new Date(b.local_date));
-      
-      groupMatches.forEach(g => {
-         const homeName = window.idToNameMap ? window.idToNameMap[g.home_team_id] : "";
-         const awayName = window.idToNameMap ? window.idToNameMap[g.away_team_id] : "";
-         const localHomeName = window.apiToLocalNames ? (window.apiToLocalNames[homeName] || homeName) : homeName;
-         const localAwayName = window.apiToLocalNames ? (window.apiToLocalNames[awayName] || awayName) : awayName;
-         
-         const isFinished = g.finished === "TRUE";
-         const scoreDisplay = isFinished || (g.home_score !== null && g.home_score !== "") ? `${g.home_score} - ${g.away_score}` : 'vs';
-         
-         html += `
-           <div style="display: flex; justify-content: space-between; align-items: center; padding: 5px 0; font-size: 0.85rem;">
-             <span style="flex: 1; text-align: right; margin-right: 10px;">${localHomeName} <img src="https://flagcdn.com/16x12/${getCountryCode(localHomeName)}.png" style="margin-left:5px; vertical-align: middle;"></span>
-             <span style="background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 4px; font-weight: bold; width: 40px; text-align: center;">${scoreDisplay}</span>
-             <span style="flex: 1; text-align: left; margin-left: 10px;"><img src="https://flagcdn.com/16x12/${getCountryCode(localAwayName)}.png" style="margin-right:5px; vertical-align: middle;"> ${localAwayName}</span>
-           </div>
-         `;
-      });
+    const groupMatches = window.allGames.filter(g =>
+      groupIds.includes(g.home_team_id) && groupIds.includes(g.away_team_id)
+    );
+
+    if (groupMatches.length === 0) {
+      list.innerHTML = '<p style="text-align: center; color: #aaa;">No hay partidos disponibles aún.</p>';
     } else {
-      html = '<div style="text-align: center; color: #aaa; font-size: 0.85rem;">Partidos no disponibles</div>';
+      groupMatches.sort((a, b) => new Date(a.local_date) - new Date(b.local_date));
+      groupMatches.forEach(g => {
+        const homeNameEn = window.idToNameMap ? window.idToNameMap[g.home_team_id] : '';
+        const awayNameEn = window.idToNameMap ? window.idToNameMap[g.away_team_id] : '';
+        const homeLocal = (window.apiToLocalNames && window.apiToLocalNames[homeNameEn]) || homeNameEn;
+        const awayLocal = (window.apiToLocalNames && window.apiToLocalNames[awayNameEn]) || awayNameEn;
+
+        const isFinished = g.finished === 'TRUE';
+        const hasScore = g.home_score !== null && g.home_score !== '' && g.home_score !== 'null';
+        const scoreHTML = (isFinished || hasScore)
+          ? `<span class="last-match-score">${g.home_score} - ${g.away_score}</span>`
+          : `<span class="last-match-score score-vs">vs</span>`;
+
+        const homeFlag = getCountryCode(homeLocal);
+        const awayFlag = getCountryCode(awayLocal);
+
+        // Friendly date
+        let dateStr = '';
+        if (g.local_date) {
+          try {
+            const d = new Date(g.local_date);
+            dateStr = d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+          } catch(e) { dateStr = g.local_date; }
+        }
+
+        const card = document.createElement('div');
+        card.className = 'last-match-card';
+        card.innerHTML = `
+          <div class="last-match-date">${isFinished ? '✅ Finalizado' : dateStr}</div>
+          <div class="last-match-teams">
+            <div class="last-match-team">
+              <img src="https://flagcdn.com/24x18/${homeFlag}.png" alt="">
+              <span>${homeLocal}</span>
+            </div>
+            ${scoreHTML}
+            <div class="last-match-team away">
+              <img src="https://flagcdn.com/24x18/${awayFlag}.png" alt="">
+              <span>${awayLocal}</span>
+            </div>
+          </div>
+        `;
+        list.appendChild(card);
+      });
     }
   } else {
-    html = '<div style="text-align: center; color: #aaa; font-size: 0.85rem;">Cargando partidos... (Espera o recarga)</div>';
+    list.innerHTML = '<p style="text-align: center; color: #aaa;">Cargando datos de la API...</p>';
   }
-  return html;
+
+  panel.style.display = 'block';
 }
 
 function renderHomeStandings() {
@@ -817,13 +862,10 @@ function renderHomeStandings() {
 
     const card = document.createElement("div");
     card.className = "group-card";
-    card.innerHTML = `<h3 style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">
-      <span>Grupo ${groupName}</span>
-      <span style="font-size: 0.8em; color: #aaa;">▼</span>
-    </h3>
-    <div style="display: none; padding-top: 5px; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
-      ${getGroupMatchesHTML(groupName, teams)}
-    </div>`;
+    card.id = `group-card-${groupName}`;
+    card.style.cursor = 'pointer';
+    card.onclick = () => showGroupMatchesPanel(groupName, teams);
+    card.innerHTML = `<h3>Grupo ${groupName}</h3>`;
 
     sortedTeams.forEach((t, idx) => {
       const stats = (window.officialPoints[groupName] && window.officialPoints[groupName][t.name.replace(/[.#$\[\]]/g, "")]);
