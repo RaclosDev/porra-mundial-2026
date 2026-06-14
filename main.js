@@ -704,7 +704,7 @@ function setupNavigation() {
     });
 
     if (found) {
-      viewBet(found.hash);
+      alert("¡Identidad guardada!\n\nAhora puedes darle al botón de 'Ver Mi Porra' para acceder a ella.");
     }
   });
 
