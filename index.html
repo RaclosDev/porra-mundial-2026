@@ -17,7 +17,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@400;700;900&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=1.3.63">
+    <link rel="stylesheet" href="style.css?v=1.3.64">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 
@@ -606,8 +606,6 @@
             <div class="action-buttons">
                 <button id="btn-save-my-bet" class="glass-btn primary-btn" style="width: 100%;">Guardar y Ver Mi
                     Apuesta</button>
-                <button onclick="document.getElementById('my-bet-modal').style.display='none'" class="glass-btn"
-                    style="width: 100%; margin-top: 10px;">Cancelar</button>
             </div>
         </div>
     </div>
@@ -638,20 +636,18 @@
                 <div style="font-size: 2rem; line-height: 1;">🔴</div>
                 <div>
                     <h3 style="color: #ff9f43; margin: 0 0 5px 0;">Partidos en Directo</h3>
-                    <p style="font-size: 0.95rem; margin: 0; color: #ccc;">Los partidos en curso ahora fijan su marcador
-                        en lo más alto de la pantalla, actualizando la clasificación automáticamente cada 30 segundos.
+                    <p style="font-size: 0.95rem; margin: 0; color: #ccc;">Los partidos en curso fijan su marcador
+                        en lo más alto de la pantalla actualizándose en vivo.
                     </p>
                 </div>
             </div>
 
             <div
-                style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-bottom: 25px; display: flex; gap: 15px; align-items: flex-start; border: 1px solid rgba(255,255,255,0.1);">
-                <div style="font-size: 2rem; line-height: 1;">🎟️</div>
+                style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-bottom: 15px; display: flex; gap: 15px; align-items: flex-start; border: 1px solid rgba(255,255,255,0.1);">
+                <div style="font-size: 2rem; line-height: 1;">🔍</div>
                 <div>
-                    <h3 style="color: #00d2d3; margin: 0 0 5px 0;">Sigue tu Boleto en Vivo</h3>
-                    <p style="font-size: 0.95rem; margin: 0; color: #ccc;">Al entrar a "Ver Mi Porra", tus
-                        predicciones de la Fase de Grupos se teñirán de verde o rojo en tiempo real según coincidan con
-                        la clasificación oficial.</p>
+                    <h3 style="color: #00d2d3; margin: 0 0 5px 0;">Navegación Rápida de Grupos</h3>
+                    <p style="font-size: 0.95rem; margin: 0; color: #ccc;">Haz clic en cualquier Grupo de la lista para ver al instante y en una ventana todos los partidos de ese grupo concreto.</p>
                 </div>
             </div>
 
@@ -659,10 +655,8 @@
                 style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-bottom: 25px; display: flex; gap: 15px; align-items: flex-start; border: 1px solid rgba(255,255,255,0.1);">
                 <div style="font-size: 2rem; line-height: 1;">✨</div>
                 <div>
-                    <h3 style="color: #a29bfe; margin: 0 0 5px 0;">Diseño de Porras Mejorado</h3>
-                    <p style="font-size: 0.95rem; margin: 0; color: #ccc;">Al consultar el desglose de cualquier
-                        apuesta, disfrutarás de una vista a pantalla completa con las eliminatorias y la fase de grupos
-                        claramente separadas y mucho más fáciles de leer.</p>
+                    <h3 style="color: #a29bfe; margin: 0 0 5px 0;">Interfaz Más Limpia y Organizada</h3>
+                    <p style="font-size: 0.95rem; margin: 0; color: #ccc;">El botón "Ver Mi Porra" ahora siempre está a mano en la parte superior derecha. Eliminadas las animaciones repetitivas para mayor fluidez.</p>
                 </div>
             </div>
 
@@ -745,7 +739,7 @@
     <script src="data.js"></script>
     <script src="simulator.js"></script>
     <script src="annex_c_matrix.js"></script>
-    <script type="module" src="main.js?v=1.3.63"></script>
+    <script type="module" src="main.js?v=1.3.64"></script>
 </body>
 
 </html>
