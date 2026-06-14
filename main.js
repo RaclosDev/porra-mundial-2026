@@ -803,8 +803,7 @@ function showGroupMatchesPanel(groupName, teams) {
         const awayLocal = (window.apiToLocalNames && window.apiToLocalNames[awayNameEn]) || awayNameEn;
 
         const isFinished = g.finished === 'TRUE';
-        const hasScore = g.home_score !== null && g.home_score !== '' && g.home_score !== 'null';
-        const scoreHTML = (isFinished || hasScore)
+        const scoreHTML = isFinished
           ? `<span class="last-match-score">${g.home_score} - ${g.away_score}</span>`
           : `<span class="last-match-score score-vs">vs</span>`;
 
