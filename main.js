@@ -703,9 +703,7 @@ function setupNavigation() {
       return part && part.user === selectedName;
     });
 
-    if (found) {
-      alert("¡Identidad guardada!\n\nAhora puedes darle al botón de 'Ver Mi Porra' para acceder a ella.");
-    }
+    // Sin alertas, cierra silenciosamente
   });
 
   document.getElementById("user-name").addEventListener("input", (e) => {
