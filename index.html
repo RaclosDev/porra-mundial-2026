@@ -16,7 +16,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@400;700;900&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=1.3.31">
+    <link rel="stylesheet" href="style.css?v=1.3.46">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
 </head>
@@ -27,7 +27,8 @@
             <div style="display: flex; align-items: center; gap: 15px; flex-wrap: nowrap;">
                 <h1 id="site-title" style="cursor: pointer; margin: 0; white-space: nowrap;">
                     MUNDIAL 2026 - PORRA</h1>
-                <div id="online-counter" class="tooltip-container" style="display: none; font-size: 0.9rem; font-weight: normal; background: rgba(0, 210, 211, 0.1); color: #00d2d3; padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(0, 210, 211, 0.3); text-shadow: none; white-space: nowrap; cursor: pointer; position: relative;">
+                <div id="online-counter" class="tooltip-container"
+                    style="display: none; font-size: 0.9rem; font-weight: normal; background: rgba(0, 210, 211, 0.1); color: #00d2d3; padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(0, 210, 211, 0.3); text-shadow: none; white-space: nowrap; cursor: pointer; position: relative;">
                     <span id="online-counter-text">👁️ 1 online</span>
                     <div id="online-tooltip" class="custom-tooltip">
                         <div class="tooltip-header">Conectados ahora:</div>
@@ -43,7 +44,7 @@
             <nav class="nav-links">
                 <button id="nav-home" class="glass-btn active">Inicio</button>
                 <button id="nav-leaderboard" class="glass-btn">Clasificación</button>
-                <button id="nav-radar" class="glass-btn">Radar</button>
+                <button id="nav-radar" class="glass-btn">Partidos</button>
                 <button id="nav-search" class="glass-btn">🔍 Buscador</button>
                 <button id="nav-stats" class="glass-btn">Más Elegidos</button>
                 <button id="nav-rules" class="glass-btn">Reglas y Premios</button>
@@ -112,7 +113,8 @@
 
         <!-- HOME VIEW (STANDINGS) -->
         <section id="view-home" class="view-section active">
-            <div id="live-matches-wrapper-home" style="display: none; max-width: 500px; margin: 0 auto 20px auto; text-align: center;">
+            <div id="live-matches-wrapper-home"
+                style="display: none; max-width: 500px; margin: 0 auto 20px auto; text-align: center;">
                 <h3
                     style="color: #ff4757; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;">
                     <span
@@ -124,22 +126,29 @@
 
             <div class="shooter-container" style="position: relative; justify-content: space-between;">
                 <!-- Full width lane behind the header -->
-                <div class="shooter-full-lane" style="position: absolute; top: 0; left: 50px; right: 30px; bottom: 0; display: flex; align-items: center; z-index: 1;">
+                <div class="shooter-full-lane"
+                    style="position: absolute; top: 0; left: 50px; right: 30px; bottom: 0; display: flex; align-items: center; z-index: 1;">
                     <div id="shooter-track" style="width: 100%; position: relative; height: 40px;"></div>
                 </div>
 
                 <!-- Player Lottie Animation (flipped to face right) -->
-                <div class="shooter-player-wrapper" style="position: relative; z-index: 2; transition: opacity 0.5s ease;">
+                <div class="shooter-player-wrapper"
+                    style="position: relative; z-index: 2; transition: opacity 0.5s ease;">
                     <!-- Speech Bubble -->
-                    <div id="shooter-bubble" style="position: absolute; top: -30px; left: 20px; background: white; color: black; padding: 4px 8px; border-radius: 10px; font-size: 0.8rem; font-weight: bold; white-space: nowrap; opacity: 0; transition: opacity 0.3s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.3); z-index: 10; pointer-events: none;">
+                    <div id="shooter-bubble"
+                        style="position: absolute; top: -30px; left: 20px; background: white; color: black; padding: 4px 8px; border-radius: 10px; font-size: 0.8rem; font-weight: bold; white-space: nowrap; opacity: 0; transition: opacity 0.3s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.3); z-index: 10; pointer-events: none;">
                         ¡Preparado!
                         <!-- Little triangle pointing down -->
-                        <div style="content: ''; position: absolute; bottom: -4px; left: 15px; border-width: 5px 5px 0; border-style: solid; border-color: white transparent transparent transparent;"></div>
+                        <div
+                            style="content: ''; position: absolute; bottom: -4px; left: 15px; border-width: 5px 5px 0; border-style: solid; border-color: white transparent transparent transparent;">
+                        </div>
                     </div>
-                    <div class="shooter-player" id="lottie-player" style="width: 70px; height: 70px; transform: scaleX(-1);"></div>
+                    <div class="shooter-player" id="lottie-player"
+                        style="width: 70px; height: 70px; transform: scaleX(-1);"></div>
                 </div>
-                
-                <div class="section-header center-header glass-header" style="z-index: 5; position: relative; padding: 15px 30px; border-radius: 15px; background: rgba(30, 39, 46, 0.4); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.05); margin: 0 10px;">
+
+                <div class="section-header center-header glass-header"
+                    style="z-index: 5; position: relative; padding: 15px 30px; border-radius: 15px; background: rgba(30, 39, 46, 0.4); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.05); margin: 0 10px;">
                     <h2>Clasificación Fase de Grupos</h2>
                     <p>Puntuación actual de cada selección.</p>
                     <div style="display: flex; gap: 10px; justify-content: center; margin-top: 15px; flex-wrap: wrap;">
@@ -155,33 +164,48 @@
                 </div>
 
                 <!-- Goal SVG (3D angled, right post closer/taller) -->
-                <div class="shooter-goal" style="z-index: 2; height: 100%; display: flex; align-items: center; padding-right: 10px; transition: opacity 0.5s ease;">
-                    <svg viewBox="0 0 100 100" width="85" height="85" style="color: white; filter: drop-shadow(0 0 4px rgba(255,255,255,0.4));">
+                <div class="shooter-goal"
+                    style="z-index: 2; height: 100%; display: flex; align-items: center; padding-right: 10px; transition: opacity 0.5s ease;">
+                    <svg viewBox="0 0 100 100" width="85" height="85"
+                        style="color: white; filter: drop-shadow(0 0 4px rgba(255,255,255,0.4));">
                         <!-- Back Ground Frame -->
-                        <line x1="15" y1="75" x2="65" y2="75" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
-                        <line x1="35" y1="90" x2="85" y2="90" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
-                        <line x1="65" y1="75" x2="85" y2="90" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+                        <line x1="15" y1="75" x2="65" y2="75" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" opacity="0.4" />
+                        <line x1="35" y1="90" x2="85" y2="90" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" opacity="0.4" />
+                        <line x1="65" y1="75" x2="85" y2="90" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" opacity="0.4" />
 
                         <!-- Left Net (Far) -->
-                        <polygon points="15,25 15,75 65,75" fill="currentColor" opacity="0.15" stroke="currentColor" stroke-width="0.5" />
+                        <polygon points="15,25 15,75 65,75" fill="currentColor" opacity="0.15" stroke="currentColor"
+                            stroke-width="0.5" />
                         <!-- Roof/Back Net -->
-                        <polygon points="15,25 35,10 85,90 65,75" fill="currentColor" opacity="0.1" stroke="currentColor" stroke-width="0.5" />
+                        <polygon points="15,25 35,10 85,90 65,75" fill="currentColor" opacity="0.1"
+                            stroke="currentColor" stroke-width="0.5" />
                         <!-- Right Net (Near) -->
-                        <polygon points="35,10 35,90 85,90" fill="currentColor" opacity="0.2" stroke="currentColor" stroke-width="0.5" />
+                        <polygon points="35,10 35,90 85,90" fill="currentColor" opacity="0.2" stroke="currentColor"
+                            stroke-width="0.5" />
 
                         <!-- Net texture lines -->
-                        <line x1="20" y1="21.25" x2="70" y2="78.75" stroke="currentColor" stroke-width="0.5" opacity="0.3"/>
-                        <line x1="25" y1="17.5" x2="75" y2="82.5" stroke="currentColor" stroke-width="0.5" opacity="0.3"/>
-                        <line x1="30" y1="13.75" x2="80" y2="86.25" stroke="currentColor" stroke-width="0.5" opacity="0.3"/>
-                        <line x1="25" y1="50" x2="75" y2="82.5" stroke="currentColor" stroke-width="0.5" opacity="0.3"/>
+                        <line x1="20" y1="21.25" x2="70" y2="78.75" stroke="currentColor" stroke-width="0.5"
+                            opacity="0.3" />
+                        <line x1="25" y1="17.5" x2="75" y2="82.5" stroke="currentColor" stroke-width="0.5"
+                            opacity="0.3" />
+                        <line x1="30" y1="13.75" x2="80" y2="86.25" stroke="currentColor" stroke-width="0.5"
+                            opacity="0.3" />
+                        <line x1="25" y1="50" x2="75" y2="82.5" stroke="currentColor" stroke-width="0.5"
+                            opacity="0.3" />
 
                         <!-- 3 Main Posts (Front) -->
                         <!-- Left Post (Far) -->
-                        <line x1="15" y1="25" x2="15" y2="75" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+                        <line x1="15" y1="25" x2="15" y2="75" stroke="currentColor" stroke-width="3.5"
+                            stroke-linecap="round" />
                         <!-- Crossbar -->
-                        <line x1="15" y1="25" x2="35" y2="10" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/>
+                        <line x1="15" y1="25" x2="35" y2="10" stroke="currentColor" stroke-width="4.5"
+                            stroke-linecap="round" />
                         <!-- Right Post (Near, Taller) -->
-                        <line x1="35" y1="10" x2="35" y2="90" stroke="currentColor" stroke-width="5.5" stroke-linecap="round"/>
+                        <line x1="35" y1="10" x2="35" y2="90" stroke="currentColor" stroke-width="5.5"
+                            stroke-linecap="round" />
                     </svg>
                 </div>
             </div>
@@ -193,7 +217,7 @@
             <div class="section-header" style="margin-top: 40px; margin-bottom: 20px;">
                 <h2
                     style="font-size: 1.8rem; border-bottom: 2px solid var(--accent-color); display: inline-block; padding-bottom: 5px;">
-                    Radar del Torneo</h2>
+                    Partidos</h2>
             </div>
 
             <div class="radar-container">
@@ -221,7 +245,7 @@
             <div class="section-header" style="margin-bottom: 20px;">
                 <h2
                     style="font-size: 1.8rem; border-bottom: 2px solid var(--accent-color); display: inline-block; padding-bottom: 5px;">
-                    Radar del Torneo</h2>
+                    Partidos</h2>
             </div>
 
             <div class="radar-container">
@@ -261,7 +285,8 @@
                 </div>
             </div>
 
-            <div id="live-matches-wrapper-groups" style="display: none; max-width: 500px; margin: 0 auto 20px auto; text-align: center;">
+            <div id="live-matches-wrapper-groups"
+                style="display: none; max-width: 500px; margin: 0 auto 20px auto; text-align: center;">
                 <h3
                     style="color: #ff4757; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;">
                     <span
@@ -632,10 +657,10 @@
             <h3 style="color: var(--accent-color); margin-bottom: 15px;">¿Quién eres?</h3>
             <p style="margin-bottom: 20px;">Elige tu nombre en la lista para que guardemos tu apuesta en este
                 dispositivo.</p>
-            <input type="text" id="my-bet-input" list="my-bet-names-list" class="glass-select"
-                style="width: 100%; margin-bottom: 20px; font-size: 1.1em; padding: 10px; cursor: text;"
-                placeholder="-- Selecciona o escribe tu nombre --" autocomplete="off">
-            <datalist id="my-bet-names-list"></datalist>
+            <select id="my-bet-input" class="glass-select"
+                style="width: 100%; margin-bottom: 20px; font-size: 1.1em; padding: 10px; cursor: pointer;">
+                <option value="" disabled selected hidden>-- Selecciona tu nombre --</option>
+            </select>
             <div class="action-buttons">
                 <button id="btn-save-my-bet" class="glass-btn primary-btn" style="width: 100%;">Guardar y Ver Mi
                     Apuesta</button>
@@ -646,7 +671,8 @@
     </div>
     <!-- POINTS BREAKDOWN MODAL -->
     <div id="points-breakdown-modal" class="modal" style="display: none; z-index: 999999;">
-        <div class="modal-content" style="width: 95vw; max-width: 1600px; text-align: left; max-height: 95vh; overflow-y: auto;">
+        <div class="modal-content"
+            style="width: 95vw; max-width: 1600px; text-align: left; max-height: 95vh; overflow-y: auto;">
             <div id="points-breakdown-body"></div>
             <div class="action-buttons" style="margin-top: 20px;">
                 <button onclick="document.getElementById('points-breakdown-modal').style.display='none'"
@@ -692,7 +718,9 @@
                 <div style="font-size: 2rem; line-height: 1;">✨</div>
                 <div>
                     <h3 style="color: #a29bfe; margin: 0 0 5px 0;">Diseño de Porras Mejorado</h3>
-                    <p style="font-size: 0.95rem; margin: 0; color: #ccc;">Al consultar el desglose de cualquier apuesta, disfrutarás de una vista a pantalla completa con las eliminatorias y la fase de grupos claramente separadas y mucho más fáciles de leer.</p>
+                    <p style="font-size: 0.95rem; margin: 0; color: #ccc;">Al consultar el desglose de cualquier
+                        apuesta, disfrutarás de una vista a pantalla completa con las eliminatorias y la fase de grupos
+                        claramente separadas y mucho más fáciles de leer.</p>
                 </div>
             </div>
 
@@ -726,24 +754,24 @@
         onclick="if(event.target === this) { this.style.display='none'; document.getElementById('rtve-iframe').src=''; document.getElementById('fctv-iframe').src=''; }">
         <div class="modal-content"
             style="max-width: 1100px; width: 95%; padding: 15px; background: black; border: 2px solid #ff4757; text-align: center;">
-            <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 15px; position: relative;">
-                <div id="player-buttons-container" style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
+            <div
+                style="display: flex; justify-content: center; align-items: center; margin-bottom: 15px; position: relative;">
+                <div id="player-buttons-container"
+                    style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
                     <button onclick="window.setPlayerSource('rtve')" id="btn-player-rtve" class="glass-btn primary-btn"
                         style="padding: 5px 15px; background: #ff4757; color: white; border: none; font-weight: bold;">📺
                         La 1 (RTVE)</button>
                     <button onclick="window.setPlayerSource('fctv')" id="btn-player-fctv" class="glass-btn"
                         style="padding: 5px 15px; background: #2a2a35; color: white; border: 1px solid #444; font-weight: bold;">🌐
                         RBTV</button>
-                    <button onclick="window.setPlayerSource('acestream')" id="btn-player-ace" class="glass-btn"
-                        style="padding: 5px 15px; background: #2a2a35; color: white; border: 1px solid #444; font-weight: bold;">🏴‍☠️
-                        Acestream</button>
                 </div>
                 <button
                     onclick="document.getElementById('rtve-modal').style.display='none'; document.getElementById('rtve-iframe').src=''; document.getElementById('fctv-iframe').src='';"
                     style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; position: absolute; right: 0; top: -5px;">✖</button>
             </div>
 
-            <div id="player-container-rtve" style="position: relative; padding-bottom: 56.25%; height: 0; border-radius: 8px;">
+            <div id="player-container-rtve"
+                style="position: relative; padding-bottom: 56.25%; height: 0; border-radius: 8px;">
                 <iframe id="rtve-iframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" src=""
                     frameborder="0" allow="autoplay; fullscreen; encrypted-media" allowfullscreen></iframe>
             </div>
@@ -751,28 +779,11 @@
             <div id="player-container-fctv"
                 style="display: none; position: relative; padding-bottom: 56.25%; height: 0; border-radius: 8px;">
                 <iframe id="fctv-iframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" src=""
-                    frameborder="0" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen webkitallowfullscreen mozallowfullscreen></iframe>
+                    frameborder="0" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen
+                    webkitallowfullscreen mozallowfullscreen></iframe>
             </div>
 
 
-            <div id="player-container-ace"
-                style="display: none; padding: 50px 20px; background: #1a1a24; border-radius: 8px; border: 1px solid #444;">
-                <h3 style="color: #ff9f43; margin-top: 0;">Opciones para Acestream</h3>
-                <p style="color: #ccc; margin-bottom: 20px;">Para ver esta señal necesitas tener instalado <a
-                        href="https://acestream.org/" target="_blank" style="color: #00d2d3;">Acestream</a>.</p>
-
-                <a href="acestream://688e785893b50acc1d00cb37f15bfc42e72f5ae3" class="glass-btn primary-btn"
-                    style="display: inline-block; padding: 10px 20px; text-decoration: none; font-size: 1.2rem; background: #2563eb; color: white; border-color: #3b82f6; margin-bottom: 15px;">
-                    🚀 Abrir en Aplicación (Móvil/PC)
-                </a>
-
-                <div style="background: rgba(0,0,0,0.5); padding: 15px; border-radius: 8px; margin-top: 15px;">
-                    <p style="color: #888; margin: 0 0 5px 0; font-size: 0.9rem;">O copia el ID para pegarlo
-                        manualmente:</p>
-                    <code
-                        style="background: #000; color: #00d2d3; padding: 5px 10px; border-radius: 4px; user-select: all;">688e785893b50acc1d00cb37f15bfc42e72f5ae3</code>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -801,7 +812,7 @@
     <script src="data.js"></script>
     <script src="simulator.js"></script>
     <script src="annex_c_matrix.js"></script>
-    <script type="module" src="main.js?v=1.3.31"></script>
+    <script type="module" src="main.js?v=1.3.46"></script>
 </body>
 
 </html>
