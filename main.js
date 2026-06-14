@@ -1,6 +1,6 @@
 // main.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, set, push, onValue, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, set, push, onValue, remove, onDisconnect, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -33,6 +33,11 @@ onValue(connectedRef, (snap) => {
     if (!name && localStorage.getItem("my_bet_name")) {
       name = localStorage.getItem("my_bet_name");
     }
+    
+    if (name && name !== "Anónimo") {
+      push(ref(database, 'connectionHistory'), { name, time: new Date().toISOString() });
+    }
+    
     name = name || "Anónimo";
     set(myConnectionsRef, name);
   }
@@ -681,6 +686,9 @@ function setupNavigation() {
     }
 
     localStorage.setItem("my_bet_name", selectedName);
+    
+    push(ref(database, 'connectionHistory'), { name: selectedName, time: new Date().toISOString() });
+    
     updateChangeUserButton();
     document.getElementById("my-bet-modal").style.display = "none";
 
@@ -861,6 +869,14 @@ function renderHomeStandings() {
 
   const isAdmin = checkAdmin(document.getElementById("user-name").value.trim());
 
+  const liveTeams = new Set();
+  if (window.matchRadar && window.matchRadar.live) {
+    window.matchRadar.live.forEach(m => {
+      liveTeams.add(m.home);
+      liveTeams.add(m.away);
+    });
+  }
+
   grid.innerHTML = "";
 
   Object.keys(window.groupOdds).forEach(groupName => {
@@ -880,7 +896,10 @@ function renderHomeStandings() {
       const stats = (window.officialPoints[groupName] && window.officialPoints[groupName][t.name.replace(/[.#$\[\]]/g, "")]);
       const pts = (typeof stats === 'object' && stats !== null) ? (stats.pts || 0) : (stats || 0);
       const row = document.createElement("div");
-      row.className = "group-slot";
+      
+      const isLive = liveTeams.has(t.name);
+      const liveClass = isLive ? ' live-team-pulse' : '';
+      row.className = "group-slot" + liveClass;
 
       const adminTiebreakerBtn = isAdmin ? `<button onclick="window.bumpTeam('${groupName}', '${t.name.replace(/'/g, "\\'")}')" class="glass-btn" style="padding: 2px 5px; margin-right: 5px; font-size: 0.7em; background: rgba(0, 255, 0, 0.2);" title="Subir posición (Desempate Manual)">⬆️</button>` : '';
 
@@ -897,47 +916,73 @@ function renderHomeStandings() {
     grid.appendChild(card);
   });
 
-  // Inject API Sync button if not exists
-  if (isAdmin && !document.getElementById("btn-sync-api")) {
+  // Inject Connection History button if not exists
+  if (isAdmin && !document.getElementById("btn-connection-history")) {
     const actionContainer = document.getElementById("btn-view-my-bet") ? document.getElementById("btn-view-my-bet").parentElement : null;
     if (actionContainer) {
-      const syncBtn = document.createElement("button");
-      syncBtn.id = "btn-sync-api";
-      syncBtn.className = "glass-btn primary-btn";
-      syncBtn.style.background = "#2563eb";
-      syncBtn.style.borderColor = "#3b82f6";
-      syncBtn.innerHTML = "🤖 Auto-Actualizar (API)";
-      syncBtn.onclick = syncWithApi;
-      actionContainer.appendChild(syncBtn);
+      const historyBtn = document.createElement("button");
+      historyBtn.id = "btn-connection-history";
+      historyBtn.className = "glass-btn primary-btn";
+      historyBtn.style.background = "#8b5cf6";
+      historyBtn.style.borderColor = "#a78bfa";
+      historyBtn.innerHTML = "📜 Historial";
+      historyBtn.onclick = showConnectionHistory;
+      actionContainer.appendChild(historyBtn);
     }
-  } else if (!isAdmin && document.getElementById("btn-sync-api")) {
-    document.getElementById("btn-sync-api").style.display = "none";
-  } else if (isAdmin && document.getElementById("btn-sync-api")) {
-    document.getElementById("btn-sync-api").style.display = "inline-block";
-  }
-
-  // Inject Fake Goal button if not exists
-  if (isAdmin && !document.getElementById("btn-fake-goal")) {
-    const actionContainer = document.getElementById("btn-view-my-bet") ? document.getElementById("btn-view-my-bet").parentElement : null;
-    if (actionContainer) {
-      const fakeBtn = document.createElement("button");
-      fakeBtn.id = "btn-fake-goal";
-      fakeBtn.className = "glass-btn primary-btn";
-      fakeBtn.style.background = "#dc2626";
-      fakeBtn.style.borderColor = "#ef4444";
-      fakeBtn.innerHTML = "⚽ Fake Goal (Test)";
-      fakeBtn.onclick = () => {
-        window.fakeGoalTriggered = true;
-        syncWithApi(true);
-      };
-      actionContainer.appendChild(fakeBtn);
-    }
-  } else if (!isAdmin && document.getElementById("btn-fake-goal")) {
-    document.getElementById("btn-fake-goal").style.display = "none";
-  } else if (isAdmin && document.getElementById("btn-fake-goal")) {
-    document.getElementById("btn-fake-goal").style.display = "inline-block";
+  } else if (!isAdmin && document.getElementById("btn-connection-history")) {
+    document.getElementById("btn-connection-history").style.display = "none";
+  } else if (isAdmin && document.getElementById("btn-connection-history")) {
+    document.getElementById("btn-connection-history").style.display = "inline-block";
   }
 }
+
+window.showConnectionHistory = function() {
+  const modal = document.getElementById('connection-history-modal');
+  const listEl = document.getElementById('connection-history-list');
+  if (!modal || !listEl) return;
+
+  listEl.innerHTML = '<p style="text-align:center;">Cargando historial...</p>';
+  modal.style.display = 'flex';
+
+  get(ref(database, 'connectionHistory')).then((snap) => {
+    const data = snap.val();
+    if (!data) {
+      listEl.innerHTML = '<p style="text-align:center;">No hay conexiones registradas.</p>';
+      return;
+    }
+
+    const entries = Object.values(data).sort((a, b) => new Date(b.time) - new Date(a.time));
+    const grouped = {};
+    entries.forEach(e => {
+      if (!grouped[e.name]) grouped[e.name] = [];
+      grouped[e.name].push(e);
+    });
+
+    listEl.innerHTML = Object.keys(grouped).sort().map(name => {
+      const userEntries = grouped[name];
+      const count = userEntries.length;
+      let historyHtml = userEntries.map(e => {
+        const d = new Date(e.time);
+        const formattedDate = d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) + " - " + d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        return `<div style="padding: 5px 10px; margin-left: 10px; border-left: 2px solid var(--accent-color); color: #ccc; font-size: 0.9em;">
+                  ${formattedDate}
+                </div>`;
+      }).join('');
+      
+      return `<details style="background: rgba(255,255,255,0.05); margin-bottom: 5px; border-radius: 5px; overflow: hidden;">
+                <summary style="padding: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: bold; user-select: none;">
+                  <span>${name}</span>
+                  <span style="font-size: 0.85em; color: var(--accent-color); background: rgba(0,210,211,0.15); padding: 2px 8px; border-radius: 10px;">${count} accesos</span>
+                </summary>
+                <div style="padding: 10px; padding-top: 0;">
+                  ${historyHtml}
+                </div>
+              </details>`;
+    }).join('');
+  }).catch((err) => {
+    listEl.innerHTML = '<p style="text-align:center; color: red;">Error al cargar historial.</p>';
+  });
+};
 
 window.openMatchPlayer = function (home, away) {
   const modal = document.getElementById('rtve-modal');
@@ -2371,23 +2416,63 @@ window.renderPointsLog = function (filter) {
   let listHtml = '';
 
   if (filteredLog.length > 0) {
-    listHtml += `<ul style="list-style-type: none; padding-left: 0; margin-bottom: 20px; max-height: 80vh; overflow-y: auto; padding-right: 5px;">`;
-    filteredLog.forEach(item => {
-      subtotal += item.amount;
-      listHtml += `<li style="background: rgba(255, 255, 255, 0.05); padding: 8px 12px; margin-bottom: 5px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 0.9em; color: var(--text-color);">${item.msg}</span>
-            <span style="color: var(--primary-color); font-weight: bold; background: rgba(0, 210, 211, 0.2); padding: 2px 6px; border-radius: 4px;">+${item.amount}</span>
-          </li>`;
-    });
-    listHtml += `</ul>`;
-    listHtml += `<div style="text-align: right; font-size: 1.2em; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
-          <strong>Subtotal de la fase: <span style="color: var(--accent-color);">${subtotal} pts</span></strong>
-        </div>`;
+    if (filter === 'groups') {
+      const grouped = {};
+      filteredLog.forEach(item => {
+        subtotal += item.amount;
+        let match = item.msg.match(/^Grupo ([A-P]):\s*(.*)/);
+        let groupName = match ? match[1] : 'Otros';
+        let msg = match ? match[2] : item.msg;
+        if (!grouped[groupName]) grouped[groupName] = { points: 0, items: [] };
+        grouped[groupName].points += item.amount;
+        grouped[groupName].items.push({ msg, amount: item.amount });
+      });
+
+      listHtml += `<div style="max-height: 80vh; overflow-y: auto; padding-right: 5px; margin-bottom: 20px;">`;
+      let isFirstGroup = true;
+      Object.keys(grouped).sort().forEach(g => {
+        const data = grouped[g];
+        const gName = g === 'Otros' ? 'Otros' : 'Grupo ' + g;
+        
+        let itemsHtml = data.items.map(item => `<div style="background: rgba(255, 255, 255, 0.05); padding: 8px 12px; margin-bottom: 5px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; margin-left: 10px;">
+              <span style="font-size: 0.9em; color: var(--text-color);">${item.msg}</span>
+              <span style="color: var(--primary-color); font-weight: bold; background: rgba(0, 210, 211, 0.2); padding: 2px 6px; border-radius: 4px;">+${item.amount}</span>
+            </div>`).join('');
+
+        const openAttr = isFirstGroup ? 'open' : '';
+        isFirstGroup = false;
+
+        listHtml += `<details ${openAttr} style="background: rgba(255,255,255,0.05); margin-bottom: 5px; border-radius: 5px; overflow: hidden;">
+                  <summary style="padding: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: bold; user-select: none;">
+                    <span>${gName}</span>
+                    <span style="font-size: 0.85em; color: var(--accent-color); background: rgba(0,210,211,0.15); padding: 2px 8px; border-radius: 10px;">+${data.points} pts</span>
+                  </summary>
+                  <div style="padding: 10px; padding-top: 0;">
+                    ${itemsHtml}
+                  </div>
+                </details>`;
+      });
+      listHtml += `</div>`;
+    } else {
+      listHtml += `<ul style="list-style-type: none; padding-left: 0; margin-bottom: 20px; max-height: 80vh; overflow-y: auto; padding-right: 5px;">`;
+      filteredLog.forEach(item => {
+        subtotal += item.amount;
+        listHtml += `<li style="background: rgba(255, 255, 255, 0.05); padding: 8px 12px; margin-bottom: 5px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 0.9em; color: var(--text-color);">${item.msg}</span>
+              <span style="color: var(--primary-color); font-weight: bold; background: rgba(0, 210, 211, 0.2); padding: 2px 6px; border-radius: 4px;">+${item.amount}</span>
+            </li>`;
+      });
+      listHtml += `</ul>`;
+    }
   } else {
     listHtml += `<p style="text-align: center; color: var(--text-muted); padding: 20px 0;">No hay puntos en esta fase.</p>`;
   }
 
   container.innerHTML = listHtml;
+  const headerSubtotal = document.getElementById('points-subtotal-header');
+  if (headerSubtotal) {
+    headerSubtotal.innerHTML = `Subtotal: <span style="color: var(--accent-color);">${subtotal} pts</span>`;
+  }
 };
 
 window.showPointsBreakdown = function (hash) {
@@ -2416,6 +2501,7 @@ window.showPointsBreakdown = function (hash) {
              <div style="display: flex; gap: 15px; align-items: center;">
                ${part.scorer ? `<div style="background: rgba(255,159,67,0.15); border: 1px solid rgba(255,159,67,0.3); padding: 4px 10px; border-radius: 8px; color: #ff9f43; font-weight: bold; font-size: 0.9em;">⚽ Pichichi: ${part.scorer}</div>` : ''}
                <div style="background: rgba(0,210,211,0.15); border: 1px solid rgba(0,210,211,0.3); padding: 4px 10px; border-radius: 8px; color: var(--accent-color); font-weight: bold; font-size: 1.1em;">🏆 Total: ${points.total} pts</div>
+               <button onclick="document.getElementById('points-breakdown-modal').style.display='none'" class="glass-btn primary-btn" style="padding: 4px 15px; font-size: 1rem; border-radius: 8px;">Cerrar</button>
              </div>
            </div>`;
 
@@ -2580,7 +2666,10 @@ window.showPointsBreakdown = function (hash) {
   // COLUMNA DERECHA: Puntos
   html += `<div id="points-col-wrapper" style="flex: 1; min-width: 250px; transition: all 0.3s ease; max-height: 85vh; overflow-y: auto;">
              <details id="details-points" open ontoggle="const wrap = document.getElementById('points-col-wrapper'); wrap.style.flex = this.open ? '1' : '0 0 auto'; wrap.style.minWidth = this.open ? '250px' : 'auto'; this.querySelector('summary').style.borderBottom = this.open ? '1px solid rgba(255,255,255,0.1)' : 'none';" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; box-sizing: border-box; overflow: hidden;">
-               <summary style="color: var(--accent-color); font-size: 1.1em; font-weight: bold; cursor: pointer; user-select: none; padding-bottom: 5px; white-space: nowrap;">Desglose de Puntos</summary>
+               <summary style="display: flex; justify-content: space-between; align-items: center; color: var(--accent-color); font-size: 1.1em; font-weight: bold; cursor: pointer; user-select: none; padding-bottom: 5px;">
+                 <span>Desglose de Puntos</span>
+                 <span id="points-subtotal-header" style="font-size: 0.9em; font-weight: normal; color: #fff;"></span>
+               </summary>
                <div id="points-log-container" style="margin-top: 15px;"></div>
              </details>
            </div>`; // Fin Columna Derecha
