@@ -766,6 +766,41 @@ window.exitReadOnlyMode = function () {
 // ----------------------------------------------------
 // GROUP STAGE SELECT VIEW
 // ----------------------------------------------------
+function getGroupMatchesHTML(groupName, teams) {
+  let html = '';
+  if (window.allGames && window.nameToIdMap) {
+    const groupIds = teams.map(t => window.nameToIdMap[t.name]);
+    const groupMatches = window.allGames.filter(g => groupIds.includes(g.home_team_id) && groupIds.includes(g.away_team_id));
+    
+    if (groupMatches.length > 0) {
+      groupMatches.sort((a, b) => new Date(a.local_date) - new Date(b.local_date));
+      
+      groupMatches.forEach(g => {
+         const homeName = window.idToNameMap ? window.idToNameMap[g.home_team_id] : "";
+         const awayName = window.idToNameMap ? window.idToNameMap[g.away_team_id] : "";
+         const localHomeName = window.apiToLocalNames ? (window.apiToLocalNames[homeName] || homeName) : homeName;
+         const localAwayName = window.apiToLocalNames ? (window.apiToLocalNames[awayName] || awayName) : awayName;
+         
+         const isFinished = g.finished === "TRUE";
+         const scoreDisplay = isFinished || (g.home_score !== null && g.home_score !== "") ? `${g.home_score} - ${g.away_score}` : 'vs';
+         
+         html += `
+           <div style="display: flex; justify-content: space-between; align-items: center; padding: 5px 0; font-size: 0.85rem;">
+             <span style="flex: 1; text-align: right; margin-right: 10px;">${localHomeName} <img src="https://flagcdn.com/16x12/${getCountryCode(localHomeName)}.png" style="margin-left:5px; vertical-align: middle;"></span>
+             <span style="background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 4px; font-weight: bold; width: 40px; text-align: center;">${scoreDisplay}</span>
+             <span style="flex: 1; text-align: left; margin-left: 10px;"><img src="https://flagcdn.com/16x12/${getCountryCode(localAwayName)}.png" style="margin-right:5px; vertical-align: middle;"> ${localAwayName}</span>
+           </div>
+         `;
+      });
+    } else {
+      html = '<div style="text-align: center; color: #aaa; font-size: 0.85rem;">Partidos no disponibles</div>';
+    }
+  } else {
+    html = '<div style="text-align: center; color: #aaa; font-size: 0.85rem;">Cargando partidos... (Espera o recarga)</div>';
+  }
+  return html;
+}
+
 function renderHomeStandings() {
   const grid = document.getElementById("home-standings-grid");
   if (!grid) return;
@@ -782,7 +817,13 @@ function renderHomeStandings() {
 
     const card = document.createElement("div");
     card.className = "group-card";
-    card.innerHTML = `<h3>Grupo ${groupName}</h3>`;
+    card.innerHTML = `<h3 style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">
+      <span>Grupo ${groupName}</span>
+      <span style="font-size: 0.8em; color: #aaa;">▼</span>
+    </h3>
+    <div style="display: none; padding-top: 5px; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+      ${getGroupMatchesHTML(groupName, teams)}
+    </div>`;
 
     sortedTeams.forEach((t, idx) => {
       const stats = (window.officialPoints[groupName] && window.officialPoints[groupName][t.name.replace(/[.#$\[\]]/g, "")]);
@@ -2541,6 +2582,8 @@ async function syncWithApi(silent = false) {
       }
     });
     window.nameToIdMap = nameToIdMap;
+    window.idToNameMap = idToNameMap;
+    window.apiToLocalNames = apiToLocalNames;
 
     // 2. Get games and calculate points
     const gamesRes = await fetch('https://corsproxy.io/?' + encodeURIComponent('https://worldcup26.ir/get/games?_cb=' + Date.now()));
