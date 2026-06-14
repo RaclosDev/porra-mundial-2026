@@ -16,7 +16,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@400;700;900&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=1.3.46">
+    <link rel="stylesheet" href="style.css?v=1.3.48">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
 </head>
@@ -270,7 +270,7 @@
         <!-- ADMIN GROUP STAGE VIEW (AND LOAD BET VIEW) -->
         <section id="view-group-stage" class="view-section">
             <div id="read-only-banner"
-                style="display: none; background: rgba(59, 130, 246, 0.2); border: 1px solid var(--accent-color); padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-weight: bold; color: var(--accent-color);">
+                style="display: none; background: rgba(59, 130, 246, 0.85); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 1000; border: 1px solid var(--accent-color); padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-weight: bold; color: var(--accent-color); box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
                 <div>Estás viendo la porra de: <span id="read-only-name" style="color: white;"></span></div>
                 <div style="margin-top: 5px; color: #ffd32a;">Máximo Goleador: <span id="read-only-scorer-name"
                         style="color: white;"></span></div>
@@ -315,7 +315,7 @@
         <!-- THIRDS SELECTION VIEW -->
         <section id="view-thirds" class="view-section">
             <div id="thirds-read-only-banner"
-                style="display: none; background: rgba(59, 130, 246, 0.2); border: 1px solid var(--accent-color); padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-weight: bold; color: var(--accent-color);">
+                style="display: none; background: rgba(59, 130, 246, 0.85); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 1000; border: 1px solid var(--accent-color); padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-weight: bold; color: var(--accent-color); box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
                 <div>Estás viendo la porra de: <span id="thirds-read-only-name" style="color: white;"></span></div>
                 <div style="margin-top: 5px; color: #ffd32a;">Máximo Goleador: <span id="thirds-read-only-scorer-name"
                         style="color: white;"></span></div>
@@ -756,17 +756,8 @@
             style="max-width: 1100px; width: 95%; padding: 15px; background: black; border: 2px solid #ff4757; text-align: center;">
             <div
                 style="display: flex; justify-content: center; align-items: center; margin-bottom: 15px; position: relative;">
-                <div id="player-buttons-container"
-                    style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
-                    <button onclick="window.setPlayerSource('rtve')" id="btn-player-rtve" class="glass-btn primary-btn"
-                        style="padding: 5px 15px; background: #ff4757; color: white; border: none; font-weight: bold;">📺
-                        La 1 (RTVE)</button>
-                    <button onclick="window.setPlayerSource('fctv')" id="btn-player-fctv" class="glass-btn"
-                        style="padding: 5px 15px; background: #2a2a35; color: white; border: 1px solid #444; font-weight: bold;">🌐
-                        RBTV</button>
-                </div>
                 <button
-                    onclick="document.getElementById('rtve-modal').style.display='none'; document.getElementById('rtve-iframe').src=''; document.getElementById('fctv-iframe').src='';"
+                    onclick="document.getElementById('rtve-modal').style.display='none'; document.getElementById('rtve-iframe').src=''; document.getElementById('stream-iframe').src='';"
                     style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; position: absolute; right: 0; top: -5px;">✖</button>
             </div>
 
@@ -776,9 +767,9 @@
                     frameborder="0" allow="autoplay; fullscreen; encrypted-media" allowfullscreen></iframe>
             </div>
 
-            <div id="player-container-fctv"
+            <div id="player-container-stream"
                 style="display: none; position: relative; padding-bottom: 56.25%; height: 0; border-radius: 8px;">
-                <iframe id="fctv-iframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" src=""
+                <iframe id="stream-iframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" src=""
                     frameborder="0" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen
                     webkitallowfullscreen mozallowfullscreen></iframe>
             </div>
@@ -812,7 +803,7 @@
     <script src="data.js"></script>
     <script src="simulator.js"></script>
     <script src="annex_c_matrix.js"></script>
-    <script type="module" src="main.js?v=1.3.46"></script>
+    <script type="module" src="main.js?v=1.3.48"></script>
 </body>
 
 </html>

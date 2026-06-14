@@ -849,97 +849,55 @@ function renderHomeStandings() {
   }
 }
 
-window.openRtvePlayer = function (home, away) {
+window.openMatchPlayer = function (home, away) {
   const modal = document.getElementById('rtve-modal');
   if (modal) {
-    window.currentSelectedMatchForPlayer = { home, away };
     const normHome = window._normalizeFctv ? window._normalizeFctv(home) : '';
     const normAway = window._normalizeFctv ? window._normalizeFctv(away) : '';
     const key = normHome + ' vs ' + normAway;
     const keyRev = normAway + ' vs ' + normHome;
 
     const isLa1 = window.la1Matches && (window.la1Matches.includes(key) || window.la1Matches.includes(keyRev));
-    const btnRtve = document.getElementById('btn-player-rtve');
-    const btnFctv = document.getElementById('btn-player-fctv');
+    
+    const containerRtve = document.getElementById('player-container-rtve');
+    const containerStream = document.getElementById('player-container-stream');
+    const iframeRtve = document.getElementById('rtve-iframe');
+    const iframeStream = document.getElementById('stream-iframe');
 
-    if (btnRtve) {
-      if (isLa1) {
-        btnRtve.style.display = 'inline-block';
-        if (btnFctv) btnFctv.style.display = 'none';
-        window.setPlayerSource('rtve');
-      } else {
-        btnRtve.style.display = 'none';
-        if (btnFctv) btnFctv.style.display = 'inline-block';
-        window.setPlayerSource('fctv');
+    if (isLa1) {
+      if (containerStream) containerStream.style.display = 'none';
+      if (containerRtve) containerRtve.style.display = 'block';
+      if (iframeStream) iframeStream.src = "";
+
+      if (iframeRtve && !iframeRtve.src.includes('rtve.es')) {
+        iframeRtve.src = "https://secure-embed.rtve.es/drmn/embed/video/1688877/";
       }
     } else {
-      window.setPlayerSource('rtve');
-    }
+      if (containerRtve) containerRtve.style.display = 'none';
+      if (containerStream) containerStream.style.display = 'block';
+      if (iframeRtve) iframeRtve.src = ""; // Stop audio
 
-    modal.style.display = 'flex';
-  }
-};
-
-window.setPlayerSource = function (source) {
-  const btnRtve = document.getElementById('btn-player-rtve');
-  const btnFctv = document.getElementById('btn-player-fctv');
-  const containerRtve = document.getElementById('player-container-rtve');
-  const containerFctv = document.getElementById('player-container-fctv');
-  const iframeRtve = document.getElementById('rtve-iframe');
-  const iframeFctv = document.getElementById('fctv-iframe');
-
-  // Reset styles
-  [btnRtve, btnFctv].forEach(btn => {
-    if (btn) {
-      btn.style.background = '#2a2a35';
-      btn.style.border = '1px solid #444';
-    }
-  });
-
-  if (source === 'rtve') {
-    if (btnRtve) { btnRtve.style.background = '#ff4757'; btnRtve.style.border = 'none'; }
-
-    if (containerFctv) containerFctv.style.display = 'none';
-    containerRtve.style.display = 'block';
-
-    if (!iframeRtve.src.includes('rtve.es')) {
-      iframeRtve.src = "https://secure-embed.rtve.es/drmn/embed/video/1688877/";
-    }
-  } else if (source === 'fctv') {
-    if (btnFctv) { btnFctv.style.background = '#ff4757'; btnFctv.style.border = 'none'; }
-
-    containerRtve.style.display = 'none';
-    if (containerFctv) containerFctv.style.display = 'block';
-
-    iframeRtve.src = ""; // Stop audio
-
-    // Buscar el partido clickado
-    if (window.currentSelectedMatchForPlayer && window.currentSelectedMatchForPlayer.home && window._normalizeFctv) {
-      const m = window.currentSelectedMatchForPlayer;
-      const key = window._normalizeFctv(m.home) + ' vs ' + window._normalizeFctv(m.away);
-      // Pedir contraseña al usuario para mayor seguridad, o usar la guardada
       let userToken = localStorage.getItem('fctv_token');
       if (!userToken) {
         userToken = prompt("Introduce la contraseña secreta para desbloquear esta emisión:");
         if (!userToken) {
-          iframeFctv.src = "";
+          if (iframeStream) iframeStream.src = "";
+          modal.style.display = 'none';
           return;
         }
       }
       
       const workerUrl = 'https://wandering-tooth-4aab.cst-pod.workers.dev';
       
-      // Llamamos al Worker con la contraseña del usuario
       fetch(workerUrl + "/stream?match=" + encodeURIComponent(key) + "&token=" + encodeURIComponent(userToken))
         .then(res => {
           if (res.status === 403) throw new Error('Contraseña incorrecta');
           return res.json();
         })
         .then(data => {
-          if (data.url) {
-            // Guardamos la contraseña si ha funcionado
+          if (data.url && iframeStream) {
             localStorage.setItem('fctv_token', userToken);
-            iframeFctv.src = data.url;
+            iframeStream.src = data.url;
           } else {
             alert('Error al obtener el enlace del partido.');
           }
@@ -947,17 +905,16 @@ window.setPlayerSource = function (source) {
         .catch(err => {
           console.error('Error fetching stream:', err);
           if (err.message === 'Contraseña incorrecta') {
-            // Borramos la clave mala de la memoria si falló
             localStorage.removeItem('fctv_token');
             alert('❌ Contraseña incorrecta. Acceso denegado.');
           } else {
             alert('Error de conexión con el servidor de enlaces.');
           }
+          modal.style.display = 'none';
         });
-    } else {
-      alert('Error: No se pudo identificar el partido.');
-      iframeFctv.src = "";
     }
+
+    modal.style.display = 'flex';
   }
 };
 
@@ -1047,7 +1004,7 @@ function renderLastMatches() {
         // Sanitize team names for JS string argument
         const safeHome = m.home.replace(/'/g, "\\'");
         const safeAway = m.away.replace(/'/g, "\\'");
-        rtveBtn = `<div style="text-align: center; margin-top: 10px;"><button onclick="window.openRtvePlayer('${safeHome}', '${safeAway}')" style="background: #ff0000; color: white; border: none; padding: 6px 20px; border-radius: 20px; font-size: 0.9rem; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 5px; box-shadow: 0 2px 4px rgba(255,0,0,0.3);"><span>${iconPlay}</span> ${btnText}</button></div>`;
+        rtveBtn = `<div style="text-align: center; margin-top: 10px;"><button onclick="window.openMatchPlayer('${safeHome}', '${safeAway}')" style="background: #ff0000; color: white; border: none; padding: 6px 20px; border-radius: 20px; font-size: 0.9rem; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 5px; box-shadow: 0 2px 4px rgba(255,0,0,0.3);"><span>${iconPlay}</span> ${btnText}</button></div>`;
       } else if (matchType === 'last') {
         const safeHome = m.home.replace(/'/g, "\\'");
         const safeAway = m.away.replace(/'/g, "\\'");
