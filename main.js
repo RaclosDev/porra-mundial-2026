@@ -2668,6 +2668,7 @@ async function syncWithApi(silent = false) {
           const offsetHours = stadiumOffsetsToSpain[game.stadium_id] || 0;
           localMatchDate.setHours(localMatchDate.getHours() + offsetHours);
           gameDateStr = localMatchDate.toISOString();
+          game.local_date = gameDateStr; // update the object so groups use the correct time
         } catch (e) { }
       }
 
