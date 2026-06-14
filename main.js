@@ -2878,7 +2878,7 @@ function checkAndPromptMyBet() {
   }
 }
 
-const updateKey = 'update_seen_v4';
+const updateKey = 'update_seen_v5';
 if (!localStorage.getItem(updateKey)) {
   // Give a tiny delay to ensure HTML is fully parsed if async
   setTimeout(() => {
