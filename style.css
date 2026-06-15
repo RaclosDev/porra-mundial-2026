@@ -687,6 +687,10 @@ body {
     overflow: visible;
   }
   
+  .top-bar h1 {
+    font-size: 1.1rem;
+  }
+  
   .nav-links {
     flex-wrap: nowrap;
     justify-content: flex-start;
