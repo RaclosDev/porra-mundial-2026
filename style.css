@@ -915,3 +915,21 @@ body {
   }
 }
 
+
+/* Lineups Widget Placement */
+.lineups-widget-wrapper {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+@media (max-width: 1000px) {
+  .lineups-widget-wrapper {
+    position: static;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+}
+
+@media (max-width: 1000px) { .hide-on-mobile { display: none !important; } }

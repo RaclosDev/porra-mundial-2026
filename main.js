@@ -200,6 +200,7 @@ onValue(ref(database, 'matches'), (snapshot) => {
       _activeGroupPanel = null;
       showGroupMatchesPanel(p, window.groupOdds[p]);
     }
+    if (typeof renderLastMatches === "function") renderLastMatches();
   }
 });
 
@@ -1212,11 +1213,15 @@ function renderLastMatches() {
   const liveWrapperHome = document.getElementById("live-matches-wrapper-home");
   const liveWrapperGroups = document.getElementById("live-matches-wrapper-groups");
 
+  const renderLiveMatchesWidget = (matches, containerId) => {
+    renderMatches(matches, containerId, 'live');
+  };
+
   if (radarLive.length > 0) {
     if (liveWrapperHome) liveWrapperHome.style.display = "block";
     if (liveWrapperGroups) liveWrapperGroups.style.display = "block";
-    renderMatches(radarLive, "live-matches-container-home", 'live');
-    renderMatches(radarLive, "live-matches-container-groups", 'live');
+    renderLiveMatchesWidget(radarLive, "live-matches-container-home");
+    renderLiveMatchesWidget(radarLive, "live-matches-container-groups");
   } else {
     if (liveWrapperHome) liveWrapperHome.style.display = "none";
     if (liveWrapperGroups) liveWrapperGroups.style.display = "none";
@@ -2959,6 +2964,7 @@ async function syncWithApi(silent = false) {
     };
     const cacheData = JSON.parse(JSON.stringify(rawCache)); 
     await set(ref(database, 'matches'), cacheData);
+    if (typeof renderLastMatches === "function") renderLastMatches();
     
     if (!silent) alert("¡Puntuaciones sincronizadas y guardadas correctamente desde la API!");
 
