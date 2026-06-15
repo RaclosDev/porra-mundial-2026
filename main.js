@@ -3124,6 +3124,11 @@ document.addEventListener('click', function(e) {
 
   // 2. Close full-screen modals if clicking on the dark background (.modal)
   if (e.target.classList && e.target.classList.contains('modal')) {
+    // Prevent closing the "Who are you" modal by clicking outside
+    if (e.target.id === 'my-bet-modal') {
+      return;
+    }
+
     e.target.style.display = 'none';
     
     // Stop iframe videos if closing video modals
