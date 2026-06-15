@@ -2719,7 +2719,7 @@ const apiToLocalNames = {
   "Spain": "España", "Cape Verde": "Cabo Verde", "Cape Verde Islands": "Cabo Verde", "Saudi Arabia": "Arabia Saudí", "Uruguay": "Uruguay",
   "France": "Francia", "Senegal": "Senegal", "Iraq": "Irak", "Norway": "Noruega",
   "Argentina": "Argentina", "Algeria": "Argelia", "Austria": "Austria", "Jordan": "Jordania",
-  "Portugal": "Portugal", "DR Congo": "RD Congo", "Congo DR": "RD Congo", "Uzbekistan": "Uzbekistán", "Colombia": "Colombia",
+  "Portugal": "Portugal", "DR Congo": "RD Congo", "Congo DR": "RD Congo", "Democratic Republic of the Congo": "RD Congo", "Uzbekistan": "Uzbekistán", "Colombia": "Colombia",
   "England": "Inglaterra", "Croatia": "Croacia", "Ghana": "Ghana", "Panama": "Panamá"
 };
 
