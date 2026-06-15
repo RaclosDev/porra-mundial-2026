@@ -180,15 +180,42 @@ onValue(ref(database, 'official'), (snapshot) => {
 });
 
 onValue(ref(database, 'officialPoints'), (snapshot) => {
-  window.officialPoints = snapshot.val() || {};
+  const data = snapshot.val() || {};
+  window.officialPoints = data;
   if (typeof renderHomeStandings === "function") renderHomeStandings();
   if (typeof renderLeaderboard === "function") renderLeaderboard();
 });
+
+onValue(ref(database, 'matches'), (snapshot) => {
+  const cache = snapshot.val();
+  if (cache) {
+    window.allGames = cache.allGames || [];
+    
+    window.nameToIdMap = {};
+    (cache.nameToIdMapList || []).forEach(item => window.nameToIdMap[item.k] = item.v);
+    
+    window.idToNameMap = {};
+    (cache.idToNameMapList || []).forEach(item => window.idToNameMap[item.k] = item.v);
+    
+    window.apiToLocalNames = {};
+    (cache.apiToLocalNamesList || []).forEach(item => window.apiToLocalNames[item.k] = item.v);
+    
+    if (typeof _activeGroupPanel === "string" && window.groupOdds && window.groupOdds[_activeGroupPanel]) {
+      const p = _activeGroupPanel;
+      _activeGroupPanel = null;
+      showGroupMatchesPanel(p, window.groupOdds[p]);
+    }
+  }
+});
+
 
 onValue(ref(database, 'matchRadar'), (snapshot) => {
   window.matchRadar = snapshot.val() || { last: [], next: [] };
   if (typeof renderLastMatches === "function") renderLastMatches();
 });
+
+// apiCache listener removed, now handled in officialPoints
+
 
 onValue(ref(database, 'bets'), (snapshot) => {
   const data = snapshot.val();
@@ -2911,6 +2938,16 @@ async function syncWithApi(silent = false) {
     // Save to firebase
     await set(ref(database, 'officialPoints'), newPoints);
     await set(ref(database, 'matchRadar'), radar);
+    
+    const rawCache = {
+      allGames: window.allGames || [],
+      nameToIdMapList: Object.entries(window.nameToIdMap || {}).map(([k,v]) => ({k,v})),
+      idToNameMapList: Object.entries(window.idToNameMap || {}).map(([k,v]) => ({k,v})),
+      apiToLocalNamesList: Object.entries(window.apiToLocalNames || {}).map(([k,v]) => ({k,v}))
+    };
+    const cacheData = JSON.parse(JSON.stringify(rawCache)); 
+    await set(ref(database, 'matches'), cacheData);
+    
     if (!silent) alert("¡Puntuaciones sincronizadas y guardadas correctamente desde la API!");
 
   } catch (error) {
