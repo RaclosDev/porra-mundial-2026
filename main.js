@@ -76,14 +76,9 @@ onValue(onlineUsersRef, (snap) => {
     }
     // Para móvil: toggle de la visibilidad al tocar (el :hover de CSS ya suele bastar, 
     // pero por si acaso, forzamos un pequeño "toque" visual en JS)
-    counterEl.onclick = function () {
-      const tooltip = document.getElementById('online-tooltip');
-      if (tooltip) {
-        const isVisible = tooltip.style.visibility === 'visible';
-        tooltip.style.visibility = isVisible ? '' : 'visible';
-        tooltip.style.opacity = isVisible ? '' : '1';
-        tooltip.style.top = isVisible ? '' : '150%';
-      }
+    counterEl.onclick = function (e) {
+      e.stopPropagation();
+      counterEl.classList.toggle('show-tooltip');
     };
   }
 });
@@ -3119,3 +3114,49 @@ document.getElementById('btn-share-wa')?.addEventListener('click', async () => {
   }
 });
 
+// Click outside listener to close tooltips, panels, and modals
+document.addEventListener('click', function(e) {
+  // 1. Close online counter tooltip
+  const counterEl = document.getElementById('online-counter');
+  if (counterEl && !counterEl.contains(e.target)) {
+    counterEl.classList.remove('show-tooltip');
+  }
+
+  // 2. Close full-screen modals if clicking on the dark background (.modal)
+  if (e.target.classList && e.target.classList.contains('modal')) {
+    e.target.style.display = 'none';
+    
+    // Stop iframe videos if closing video modals
+    if (e.target.id === 'rtve-modal') {
+      const rtveIframe = document.getElementById('rtve-iframe');
+      const streamIframe = document.getElementById('stream-iframe');
+      if (rtveIframe) rtveIframe.src = '';
+      if (streamIframe) streamIframe.src = '';
+    }
+  }
+
+  // Same for stats-modal if it uses a custom inline style instead of class
+  if (e.target.id === 'stats-modal') {
+    e.target.style.display = 'none';
+    const statsIframe = document.getElementById('stats-iframe');
+    if (statsIframe) statsIframe.src = '';
+  }
+
+  // 3. Close the Group Matches Panel if clicking outside of it
+  const panel = document.getElementById('group-matches-panel');
+  // We only care if it's currently open
+  if (panel && panel.style.display === 'block') {
+    // If the click is NOT inside the panel AND NOT on a group card (which triggers opening the panel)
+    if (!panel.contains(e.target) && !e.target.closest('.group-card')) {
+      if (typeof closeGroupPanel === 'function') {
+        closeGroupPanel();
+      } else {
+        panel.style.display = 'none';
+        document.querySelectorAll('.group-card').forEach(c => {
+          c.style.borderColor = '';
+          c.style.boxShadow = '';
+        });
+      }
+    }
+  }
+});
