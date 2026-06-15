@@ -115,47 +115,54 @@
                         </tbody>
                     </table>
                 </div>
-                <div style="flex: 0 0 320px; display: flex; flex-direction: column; gap: 8px;">
-                    <div style="text-align: center; color: #ffd32a; font-size: 1rem; font-weight: bold; padding: 6px; background: rgba(255, 211, 42, 0.1); border: 1px solid rgba(255, 211, 42, 0.3); border-radius: 12px;">
-                        🥇 PICHICHI
-                    </div>
-                    <div class="sofascore-widget-container" style="overflow: hidden; position: relative; height: 86px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.1);">
-                        <iframe id="sofa-standings-embed-16-58210" src="https://widgets.sofascore.com/es-ES/embed/unique-tournament/16/season/58210/topPlayers?numberOfTopPlayers=1&showCompetitionLogo=true&widgetTitle=Pichichi&widgetTheme=dark&sortBy=goals&seasonPeriodType=overall" frameborder="0" scrolling="no" style="width:calc(100% + 2px)!important;height:316px!important;max-width:none!important; position: absolute; top: -81px; left: -1px;"></iframe>
-                    </div>
-                </div>
             </div>
         </section>
 
         <!-- HOME VIEW (STANDINGS) -->
         <section id="view-home" class="view-section active">
 
-            <!-- Clasificación Fase de Grupos - TÍTULO ARRIBA -->
-            <div class="section-header" style="margin-bottom: 15px; text-align: center;">
-                <h2
-                    style="font-size: 1.8rem; border-bottom: 2px solid var(--accent-color); display: inline-block; padding-bottom: 5px;">
-                    Clasificación Fase de Grupos</h2>
-            </div>
+            <div style="display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 20px; margin-bottom: 20px; width: 100%;">
+                
+                <!-- Left Spacer (to keep center aligned) -->
+                <div style="flex: 1; min-width: 320px; display: none;" class="desktop-spacer"></div>
 
-            <!-- Partidos en Curso -->
-            <div id="live-matches-wrapper-home"
-                style="display: none; max-width: 500px; margin: 0 auto 20px auto; text-align: center;">
-                <h3
-                    style="color: #ff4757; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    <span
-                        style="display: inline-block; width: 10px; height: 10px; background: #ff4757; border-radius: 50%; animation: pulse 1.5s infinite;"></span>
-                    Partidos en Curso
-                </h3>
-                <div id="live-matches-container-home" class="last-matches-grid"></div>
-            </div>
+                <!-- Center Area -->
+                <div style="flex: 1; min-width: 300px; display: flex; flex-direction: column; align-items: center;">
+                    <!-- Clasificación Fase de Grupos - TÍTULO ARRIBA -->
+                    <div class="section-header" style="margin-bottom: 15px; text-align: center;">
+                        <h2 style="font-size: 1.8rem; border-bottom: 2px solid var(--accent-color); display: inline-block; padding-bottom: 5px;">
+                            Clasificación Fase de Grupos
+                        </h2>
+                    </div>
 
-            <div id="action-buttons-container" style="text-align: center; margin-bottom: 20px;">
-                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                    <button id="btn-view-my-bet" style="display: none;"></button>
-                    <button id="btn-change-my-bet" class="glass-btn"
-                        style="display: none; padding: 10px 15px; font-weight: bold; font-size: 0.9em;"
-                        title="Cambiar usuario guardado">🔄 Cambiar Usuario</button>
-                    <button id="btn-save-points" class="glass-btn primary-btn" style="display: none;">💾 Guardar
-                        Puntuaciones</button>
+                    <!-- Partidos en Curso -->
+                    <div id="live-matches-wrapper-home" style="display: none; max-width: 500px; margin: 0 auto 20px auto; text-align: center;">
+                        <h3 style="color: #ff4757; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <span style="display: inline-block; width: 10px; height: 10px; background: #ff4757; border-radius: 50%; animation: pulse 1.5s infinite;"></span>
+                            Partidos en Curso
+                        </h3>
+                        <div id="live-matches-container-home" class="last-matches-grid"></div>
+                    </div>
+
+                    <div id="action-buttons-container" style="text-align: center; margin-bottom: 10px;">
+                        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                            <button id="btn-view-my-bet" style="display: none;"></button>
+                            <button id="btn-change-my-bet" class="glass-btn" style="display: none; padding: 10px 15px; font-weight: bold; font-size: 0.9em;" title="Cambiar usuario guardado">🔄 Cambiar Usuario</button>
+                            <button id="btn-save-points" class="glass-btn primary-btn" style="display: none;">💾 Guardar Puntuaciones</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Area (Pichichi) -->
+                <div style="flex: 1; min-width: 320px; display: flex; justify-content: flex-end;">
+                    <div style="flex: 0 0 320px; display: flex; flex-direction: column; gap: 8px;">
+                        <div style="text-align: center; color: #ffd32a; font-size: 1rem; font-weight: bold; padding: 6px; background: rgba(255, 211, 42, 0.1); border: 1px solid rgba(255, 211, 42, 0.3); border-radius: 12px;">
+                            🥇 PICHICHI
+                        </div>
+                        <div class="sofascore-widget-container" style="overflow: hidden; position: relative; height: 86px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                            <iframe id="sofa-standings-embed-16-58210" src="https://widgets.sofascore.com/es-ES/embed/unique-tournament/16/season/58210/topPlayers?numberOfTopPlayers=1&showCompetitionLogo=true&widgetTitle=Pichichi&widgetTheme=dark&sortBy=goals&seasonPeriodType=overall" frameborder="0" scrolling="no" style="width:calc(100% + 2px)!important;height:316px!important;max-width:none!important; position: absolute; top: -81px; left: -1px;"></iframe>
+                        </div>
+                    </div>
                 </div>
             </div>
 
