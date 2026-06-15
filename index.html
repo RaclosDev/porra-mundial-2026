@@ -13,7 +13,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mundial 2026 - Porra</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚽</text></svg>">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚽</text></svg>">
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@400;700;900&display=swap"
         rel="stylesheet">
@@ -35,7 +36,10 @@
                         <ul id="online-users-list"></ul>
                     </div>
                 </div>
-                <button id="btn-view-my-bet-header" onclick="document.getElementById('btn-view-my-bet') && document.getElementById('btn-view-my-bet').click()" style="display: none; background: linear-gradient(135deg, #f368e0, #ff9ff3); border: none; color: black; padding: 5px 14px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; cursor: pointer; white-space: nowrap;">👀 Ver Mi Porra</button>
+                <button id="btn-view-my-bet-header"
+                    onclick="document.getElementById('btn-view-my-bet') && document.getElementById('btn-view-my-bet').click()"
+                    style="display: none; background: linear-gradient(135deg, #f368e0, #ff9ff3); border: none; color: black; padding: 5px 14px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; cursor: pointer; white-space: nowrap;">👀
+                    Ver Mi Porra</button>
             </div>
             <div class="user-info" id="user-info-bar" style="display: none;">
                 <input type="text" id="user-name" placeholder="Tu Nombre">
@@ -49,7 +53,6 @@
                 <button id="nav-search" class="glass-btn">🔍 Buscador</button>
                 <button id="nav-stats" class="glass-btn">Más Elegidos</button>
                 <button id="nav-rules" class="glass-btn">Reglas y Premios</button>
-                <button id="nav-top-scorers" class="glass-btn" style="background: linear-gradient(135deg, #ffd32a, #ffa801); color: black; font-weight: bold; border: none; text-shadow: none;" onclick="document.getElementById('top-scorers-modal').style.display='flex'">🥇 Goleadores</button>
                 <button id="nav-group" class="glass-btn" style="display:none;">Grupos</button>
                 <button id="nav-thirds" class="glass-btn" style="display:none;">Mejores Terceros</button>
                 <button id="nav-bracket" class="glass-btn" style="display:none;">Eliminatorias</button>
@@ -90,26 +93,34 @@
                     ⚠️ Las puntuaciones incluyen posiciones virtuales (provisionales) de los grupos en juego.
                 </div>
             </div>
-            <div class="table-container">
-                <table class="leaderboard-table">
-                    <thead>
-                        <tr>
-                            <th>Pos</th>
-                            <th>Participante</th>
-                            <th>TOTAL</th>
-                            <th>F.Grupos</th>
-                            <th>1/16</th>
-                            <th>Octavos</th>
-                            <th>Cuartos</th>
-                            <th>Semis</th>
-                            <th>Finales</th>
-                            <th>Goleador</th>
-                        </tr>
-                    </thead>
-                    <tbody id="leaderboard-body-tab">
-                        <!-- Populated by JS -->
-                    </tbody>
-                </table>
+            <div style="display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; justify-content: center;">
+                <div class="table-container" style="flex: 1; min-width: 300px; max-width: 800px; margin: 0;">
+                    <table class="leaderboard-table">
+                        <thead>
+                            <tr>
+                                <th>Pos</th>
+                                <th>Participante</th>
+                                <th>TOTAL</th>
+                                <th>F.Grupos</th>
+                                <th>1/16</th>
+                                <th>Octavos</th>
+                                <th>Cuartos</th>
+                                <th>Semis</th>
+                                <th>Finales</th>
+                                <th>Goleador</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboard-body-tab">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="sofascore-widget-container" style="flex: 0 0 320px; background: #000; border-radius: 8px; overflow: hidden; border: 1px solid #333;">
+                    <iframe id="sofa-standings-embed-16-58210" src="https://widgets.sofascore.com/es-ES/embed/unique-tournament/16/season/58210/topPlayers?numberOfTopPlayers=1&showCompetitionLogo=true&widgetTitle=Pichichi&widgetTheme=dark&sortBy=goals&seasonPeriodType=overall" frameborder="0" scrolling="no" style="width:100%!important;height:314px!important;max-width:320px!important;"></iframe>
+                    <div style="font-size:12px;font-family:Arial,sans-serif;text-align:center; padding-bottom: 5px; color: #888;">
+                        Top Players list provided by <a target="_blank" href="https://sofascore.com/" style="color: #ffd32a;">Sofascore</a>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -118,7 +129,9 @@
 
             <!-- Clasificación Fase de Grupos - TÍTULO ARRIBA -->
             <div class="section-header" style="margin-bottom: 15px; text-align: center;">
-                <h2 style="font-size: 1.8rem; border-bottom: 2px solid var(--accent-color); display: inline-block; padding-bottom: 5px;">Clasificación Fase de Grupos</h2>
+                <h2
+                    style="font-size: 1.8rem; border-bottom: 2px solid var(--accent-color); display: inline-block; padding-bottom: 5px;">
+                    Clasificación Fase de Grupos</h2>
             </div>
 
             <!-- Partidos en Curso -->
@@ -149,10 +162,12 @@
             </div>
 
             <!-- Panel flotante fijo a la derecha de los grupos -->
-            <div id="group-matches-panel" style="display: none; position: fixed; top: 10px; right: 20px; width: 380px; max-height: calc(100vh - 20px); overflow-y: auto; background: rgba(15, 23, 42, 0.97); backdrop-filter: blur(12px); border-radius: 12px; padding: 20px; border: 1px solid rgba(59,130,246,0.4); box-shadow: 0 8px 32px rgba(0,0,0,0.5); z-index: 500; animation: fadeIn 0.3s ease;">
+            <div id="group-matches-panel"
+                style="display: none; position: fixed; top: 10px; right: 20px; width: 380px; max-height: calc(100vh - 20px); overflow-y: auto; background: rgba(15, 23, 42, 0.97); backdrop-filter: blur(12px); border-radius: 12px; padding: 20px; border: 1px solid rgba(59,130,246,0.4); box-shadow: 0 8px 32px rgba(0,0,0,0.5); z-index: 500; animation: fadeIn 0.3s ease;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <h3 id="group-matches-title" style="color: var(--accent-color); margin: 0;"></h3>
-                    <button id="btn-close-group-panel" style="background:none;border:none;color:#aaa;font-size:1.4rem;cursor:pointer;">✖</button>
+                    <button id="btn-close-group-panel"
+                        style="background:none;border:none;color:#aaa;font-size:1.4rem;cursor:pointer;">✖</button>
                 </div>
                 <div id="group-matches-list" class="last-matches-grid"></div>
             </div>
@@ -615,9 +630,11 @@
     <div id="connection-history-modal" class="modal" style="display: none; z-index: 999999;">
         <div class="modal-content" style="max-width: 500px;">
             <h3 style="color: var(--accent-color); margin-bottom: 15px;">📜 Historial de Conexiones</h3>
-            <div id="connection-history-list" style="max-height: 60vh; overflow-y: auto; text-align: left; margin-bottom: 20px;"></div>
+            <div id="connection-history-list"
+                style="max-height: 60vh; overflow-y: auto; text-align: left; margin-bottom: 20px;"></div>
             <div class="action-buttons">
-                <button onclick="document.getElementById('connection-history-modal').style.display='none'" class="glass-btn primary-btn" style="width: 100%;">Cerrar</button>
+                <button onclick="document.getElementById('connection-history-modal').style.display='none'"
+                    class="glass-btn primary-btn" style="width: 100%;">Cerrar</button>
             </div>
         </div>
     </div>
@@ -645,7 +662,8 @@
                 <div style="font-size: 2rem; line-height: 1;">🔍</div>
                 <div>
                     <h3 style="color: #00d2d3; margin: 0 0 5px 0;">Partidos por Grupo</h3>
-                    <p style="font-size: 0.95rem; margin: 0; color: #ccc;">Haz clic en cualquier Grupo para ver todos sus partidos al instante.</p>
+                    <p style="font-size: 0.95rem; margin: 0; color: #ccc;">Haz clic en cualquier Grupo para ver todos
+                        sus partidos al instante.</p>
                 </div>
             </div>
 
@@ -654,7 +672,8 @@
                 <div style="font-size: 2rem; line-height: 1;">✨</div>
                 <div>
                     <h3 style="color: #a29bfe; margin: 0 0 5px 0;">Diseño más limpio</h3>
-                    <p style="font-size: 0.95rem; margin: 0; color: #ccc;">Botón "Ver Mi Porra" fijo arriba a la derecha y animaciones simplificadas para mayor rapidez.</p>
+                    <p style="font-size: 0.95rem; margin: 0; color: #ccc;">Botón "Ver Mi Porra" fijo arriba a la derecha
+                        y animaciones simplificadas para mayor rapidez.</p>
                 </div>
             </div>
 
@@ -702,9 +721,9 @@
 
             <div id="player-container-stream"
                 style="display: none; position: relative; padding-bottom: 56.25%; height: 0; border-radius: 8px;">
-                <iframe id="stream-iframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" src=""
-                    frameborder="0" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen
-                    webkitallowfullscreen mozallowfullscreen></iframe>
+                <iframe id="stream-iframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+                    src="" frameborder="0" allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+                    allowfullscreen webkitallowfullscreen mozallowfullscreen></iframe>
             </div>
 
 
@@ -729,25 +748,6 @@
             </div>
         </div>
     </div>
-
-    <!-- TOP SCORERS MODAL -->
-    <div id="top-scorers-modal" class="modal" style="display: none; z-index: 9999999;">
-        <div class="modal-content" style="max-width: 600px; width: 95%; height: 80vh; padding: 15px; background: black; border: 2px solid #ffd32a; text-align: center; display: flex; flex-direction: column;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="color: #ffd32a; margin: 0;">🥇 Top Goleadores</h3>
-                <button onclick="document.getElementById('top-scorers-modal').style.display='none';" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;">✖</button>
-            </div>
-            
-            <div style="flex-grow: 1; border-radius: 8px; background: #fff; overflow: hidden; position: relative;">
-                <!-- SofaScore Top Scorers Widget -->
-                <iframe id="sofa-top-scorers" width="100%" height="100%" src="https://widgets.sofascore.com/embed/unique-tournament/16/season/41087/top-players/goals?widgetTitle=Ranking+Mundial" frameborder="0" scrolling="no" style="position: absolute; top:0; left:0;"></iframe>
-            </div>
-            <div style="font-size: 0.8rem; color: #888; margin-top: 10px;">
-                Nota: Mostrando datos del Mundial 2022 hasta que empiece el de 2026.
-            </div>
-        </div>
-    </div>
-
     <!-- App Scripts -->
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <script src="fctv-links.js"></script>
