@@ -859,16 +859,28 @@ function showGroupMatchesPanel(groupName, teams) {
           } catch(e) { dateStr = g.local_date; }
         }
 
+        const safeHome = homeLocal.replace(/'/g, "\\'");
+        const safeAway = awayLocal.replace(/'/g, "\\'");
+        let statsBtn = '';
+        if (isFinished) {
+          statsBtn = `<button onclick="window.openStats('${safeHome}', '${safeAway}')" style="background: #1e272e; color: #00d2d3; border: 1px solid rgba(0,210,211,0.3); padding: 4px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); margin-top: 5px;"><span>📊</span> Stats</button>`;
+        }
+
         const card = document.createElement('div');
         card.className = 'last-match-card';
         card.innerHTML = `
-          <div class="last-match-date">${isFinished ? '✅ Finalizado' : dateStr}</div>
+          ${isFinished ? '' : `<div class="last-match-date">${dateStr}</div>`}
           <div class="last-match-teams">
-            <div class="last-match-team">
+            <div class="last-match-team home">
               <img src="https://flagcdn.com/24x18/${homeFlag}.png" alt="">
               <span>${homeLocal}</span>
             </div>
-            ${scoreHTML}
+            
+            <div class="last-match-center" style="display: flex; flex-direction: column; align-items: center;">
+              ${scoreHTML}
+              ${statsBtn}
+            </div>
+
             <div class="last-match-team away">
               <img src="https://flagcdn.com/24x18/${awayFlag}.png" alt="">
               <span>${awayLocal}</span>
@@ -1175,13 +1187,18 @@ function renderLastMatches() {
             ${homeFlag}
             <span>${m.home}</span>
           </div>
-          ${scoreHtml}
+          
+          <div class="last-match-center" style="display: flex; flex-direction: column; align-items: center;">
+            ${scoreHtml}
+            ${matchType === 'last' ? rtveBtn.replace('Estadísticas', 'Stats').replace('padding: 5px 15px; border-radius: 20px; font-size: 0.8rem;', 'padding: 4px 10px; border-radius: 12px; font-size: 0.7rem;').replace('<div style="text-align: center; margin-top: 10px;">', '').replace('</div>', '') : ''}
+          </div>
+
           <div class="last-match-team away">
             ${awayFlag}
             <span>${m.away}</span>
           </div>
         </div>
-        ${rtveBtn}
+        ${(matchType === 'live' || matchType === 'next') ? rtveBtn : ''}
       `;
       container.appendChild(card);
     });

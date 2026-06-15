@@ -18,7 +18,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@400;700;900&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=1.3.91">
+    <link rel="stylesheet" href="style.css?v=1.3.93">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 
@@ -121,13 +121,11 @@
         <!-- HOME VIEW (STANDINGS) -->
         <section id="view-home" class="view-section active">
 
-            <div style="display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 20px; margin-bottom: 20px; width: 100%;">
+            <!-- Top Content Container -->
+            <div style="position: relative; width: 100%; margin-bottom: 20px;">
                 
-                <!-- Left Spacer (to keep center aligned) -->
-                <div style="flex: 1; min-width: 320px; display: none;" class="desktop-spacer"></div>
-
                 <!-- Center Area -->
-                <div style="flex: 1; min-width: 300px; display: flex; flex-direction: column; align-items: center;">
+                <div style="max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; align-items: center;">
                     <!-- Clasificación Fase de Grupos - TÍTULO ARRIBA -->
                     <div class="section-header" style="margin-bottom: 15px; text-align: center;">
                         <h2 style="font-size: 1.8rem; border-bottom: 2px solid var(--accent-color); display: inline-block; padding-bottom: 5px;">
@@ -154,13 +152,13 @@
                 </div>
 
                 <!-- Right Area (Pichichi) -->
-                <div style="flex: 1; min-width: 320px; display: flex; justify-content: flex-end;">
-                    <div style="flex: 0 0 320px; display: flex; flex-direction: column; gap: 8px;">
+                <div class="pichichi-widget-wrapper">
+                    <div style="width: 320px; display: flex; flex-direction: column; gap: 8px;">
                         <div style="text-align: center; color: #ffd32a; font-size: 1rem; font-weight: bold; padding: 6px; background: rgba(255, 211, 42, 0.1); border: 1px solid rgba(255, 211, 42, 0.3); border-radius: 12px;">
                             🥇 PICHICHI
                         </div>
-                        <div class="sofascore-widget-container" style="overflow: hidden; position: relative; height: 86px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.1);">
-                            <iframe id="sofa-standings-embed-16-58210" src="https://widgets.sofascore.com/es-ES/embed/unique-tournament/16/season/58210/topPlayers?numberOfTopPlayers=1&showCompetitionLogo=true&widgetTitle=Pichichi&widgetTheme=dark&sortBy=goals&seasonPeriodType=overall" frameborder="0" scrolling="no" style="width:calc(100% + 2px)!important;height:316px!important;max-width:none!important; position: absolute; top: -81px; left: -1px;"></iframe>
+                        <div class="sofascore-widget-container" style="overflow: hidden; position: relative; height: 190px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                            <iframe id="sofa-standings-embed-16-58210" src="https://widgets.sofascore.com/es-ES/embed/unique-tournament/16/season/58210/topPlayers?numberOfTopPlayers=3&showCompetitionLogo=true&widgetTitle=Pichichi&widgetTheme=dark&sortBy=goals&seasonPeriodType=overall" frameborder="0" scrolling="no" style="width:calc(100% + 2px)!important;height:420px!important;max-width:none!important; position: absolute; top: -81px; left: -1px;"></iframe>
                         </div>
                     </div>
                 </div>
@@ -172,7 +170,7 @@
 
             <!-- Panel flotante fijo a la derecha de los grupos -->
             <div id="group-matches-panel"
-                style="display: none; position: fixed; top: 10px; right: 20px; width: 380px; max-height: calc(100vh - 20px); overflow-y: auto; background: rgba(15, 23, 42, 0.97); backdrop-filter: blur(12px); border-radius: 12px; padding: 20px; border: 1px solid rgba(59,130,246,0.4); box-shadow: 0 8px 32px rgba(0,0,0,0.5); z-index: 500; animation: fadeIn 0.3s ease;">
+                style="display: none; position: fixed; top: 10px; right: 20px; width: max-content; min-width: 380px; max-width: 90vw; max-height: calc(100vh - 20px); overflow-y: auto; background: rgba(15, 23, 42, 0.97); backdrop-filter: blur(12px); border-radius: 12px; padding: 20px; border: 1px solid rgba(59,130,246,0.4); box-shadow: 0 8px 32px rgba(0,0,0,0.5); z-index: 500; animation: fadeIn 0.3s ease;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <h3 id="group-matches-title" style="color: var(--accent-color); margin: 0;"></h3>
                     <button id="btn-close-group-panel"
@@ -763,7 +761,7 @@
     <script src="data.js"></script>
     <script src="simulator.js"></script>
     <script src="annex_c_matrix.js"></script>
-    <script type="module" src="main.js?v=1.3.89"></script>
+    <script type="module" src="main.js?v=1.3.95"></script>
 </body>
 
 </html>
