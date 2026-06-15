@@ -49,6 +49,7 @@
                 <button id="nav-search" class="glass-btn">🔍 Buscador</button>
                 <button id="nav-stats" class="glass-btn">Más Elegidos</button>
                 <button id="nav-rules" class="glass-btn">Reglas y Premios</button>
+                <button id="nav-top-scorers" class="glass-btn" style="background: linear-gradient(135deg, #ffd32a, #ffa801); color: black; font-weight: bold; border: none; text-shadow: none;" onclick="document.getElementById('top-scorers-modal').style.display='flex'">🥇 Goleadores</button>
                 <button id="nav-group" class="glass-btn" style="display:none;">Grupos</button>
                 <button id="nav-thirds" class="glass-btn" style="display:none;">Mejores Terceros</button>
                 <button id="nav-bracket" class="glass-btn" style="display:none;">Eliminatorias</button>
@@ -725,6 +726,24 @@
             <div style="flex-grow: 1; position: relative; border-radius: 8px; background: #1a1a24; overflow: hidden;">
                 <iframe id="stats-iframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" src=""
                     frameborder="0" allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOP SCORERS MODAL -->
+    <div id="top-scorers-modal" class="modal" style="display: none; z-index: 9999999;">
+        <div class="modal-content" style="max-width: 600px; width: 95%; height: 80vh; padding: 15px; background: black; border: 2px solid #ffd32a; text-align: center; display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="color: #ffd32a; margin: 0;">🥇 Top Goleadores</h3>
+                <button onclick="document.getElementById('top-scorers-modal').style.display='none';" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;">✖</button>
+            </div>
+            
+            <div style="flex-grow: 1; border-radius: 8px; background: #fff; overflow: hidden; position: relative;">
+                <!-- SofaScore Top Scorers Widget -->
+                <iframe id="sofa-top-scorers" width="100%" height="100%" src="https://widgets.sofascore.com/embed/unique-tournament/16/season/41087/top-players/goals?widgetTitle=Ranking+Mundial" frameborder="0" scrolling="no" style="position: absolute; top:0; left:0;"></iframe>
+            </div>
+            <div style="font-size: 0.8rem; color: #888; margin-top: 10px;">
+                Nota: Mostrando datos del Mundial 2022 hasta que empiece el de 2026.
             </div>
         </div>
     </div>
