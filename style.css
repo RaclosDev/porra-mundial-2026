@@ -933,3 +933,9 @@ body {
 }
 
 @media (max-width: 1000px) { .hide-on-mobile { display: none !important; } }
+
+.leaderboard-table { min-width: 600px; }
+
+@media (max-width: 1000px) { .pichichi-mobile-center { justify-content: center !important; } }
+
+@media (max-width: 600px) { .section-header h2 { font-size: 1.4rem !important; } }

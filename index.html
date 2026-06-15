@@ -125,10 +125,10 @@
             <div style="display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; margin-bottom: 20px; width: 100%; gap: 20px;">
                 
                 <!-- Spacer Izquierdo (para centrar perfectamente el medio) -->
-                <div style="flex: 1; min-width: 320px;" class="hide-on-mobile"></div>
+                <div style="flex: 1; min-width: min(100%, 320px);" class="hide-on-mobile"></div>
 
                 <!-- Center Area -->
-                <div style="flex: 1; min-width: 350px; max-width: 600px; display: flex; flex-direction: column; align-items: center;">
+                <div style="flex: 1; min-width: min(100%, 350px); max-width: 600px; display: flex; flex-direction: column; align-items: center;">
                     <!-- Clasificación Fase de Grupos - TÍTULO ARRIBA -->
                     <div class="section-header" style="margin-bottom: 15px; text-align: center;">
                         <h2 style="font-size: 1.8rem; border-bottom: 2px solid var(--accent-color); display: inline-block; padding-bottom: 5px;">
@@ -155,8 +155,8 @@
                 </div>
 
                 <!-- Right Area (Pichichi) -->
-                <div style="flex: 1; min-width: 320px; display: flex; justify-content: flex-end; align-items: flex-start;">
-                    <div style="width: 320px; display: flex; flex-direction: column; gap: 8px;">
+                <div style="flex: 1; min-width: min(100%, 320px); display: flex; justify-content: flex-end; align-items: flex-start; margin-bottom: 20px;" class="pichichi-mobile-center">
+                    <div style="width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 8px;">
                         <div style="text-align: center; color: #ffd32a; font-size: 1rem; font-weight: bold; padding: 6px; background: rgba(255, 211, 42, 0.1); border: 1px solid rgba(255, 211, 42, 0.3); border-radius: 12px;">
                             🏆 PICHICHI
                         </div>
